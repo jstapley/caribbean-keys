@@ -1,20 +1,6 @@
 import Link from "next/link"
-import { Facebook, Instagram, Youtube, Mail, MapPin, Phone, Star } from "lucide-react"
+import { Facebook, Instagram, Mail, MapPin, Phone } from "lucide-react"
 import { PARISHES } from "@/lib/constants"
-
-// TikTok SVG Icon Component
-function TikTokIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-    </svg>
-  )
-}
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -31,50 +17,20 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               <a
-                href="https://www.facebook.com/roscoha"
+                href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-blue-400 transition"
-                aria-label="Facebook"
               >
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="https://www.instagram.com/caribbean_keys/"
+                href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-pink-400 transition"
-                aria-label="Instagram"
               >
                 <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="https://www.tiktok.com/@antigua.dreams"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-cyan-400 transition"
-                aria-label="TikTok"
-              >
-                <TikTokIcon className="h-5 w-5" />
-              </a>
-              <a
-                href="https://www.youtube.com/@Caribbeankeysofficial"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-red-400 transition"
-                aria-label="YouTube"
-              >
-                <Youtube className="h-5 w-5" />
-              </a>
-              <a
-                href="https://g.page/r/Ca7u9-BL3IHjEBM/review"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-yellow-400 transition"
-                aria-label="Google Reviews"
-                title="Leave us a Google Review"
-              >
-                <Star className="h-5 w-5" />
               </a>
             </div>
           </div>
@@ -86,21 +42,6 @@ export function Footer() {
               <li>
                 <Link href="/properties" className="hover:text-white transition">
                   All Properties
-                </Link>
-              </li>
-              <li>
-                <Link href="/properties/new" className="hover:text-white transition">
-                  New Listings
-                </Link>
-              </li>
-              <li>
-                <Link href="/properties/active" className="hover:text-white transition">
-                  Active Listings
-                </Link>
-              </li>
-              <li>
-                <Link href="/properties/sold" className="hover:text-white transition">
-                  Recently Sold
                 </Link>
               </li>
               <li>
@@ -120,16 +61,36 @@ export function Footer() {
           <div>
             <h3 className="text-white text-lg font-bold mb-4">Browse by Parish</h3>
             <ul className="space-y-2 text-sm">
-              {PARISHES.map((parish) => (
-                <li key={parish}>
-                  <Link
-                    href={`/properties/parish/${parish.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '')}`}
-                    className="hover:text-white transition"
-                  >
-                    {parish}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link href="/locations/st-john" className="hover:text-white transition">
+                  St. John
+                </Link>
+              </li>
+              <li>
+                <Link href="/locations/st-peter" className="hover:text-white transition">
+                  St. Peter
+                </Link>
+              </li>
+              <li>
+                <Link href="/locations/st-philip" className="hover:text-white transition">
+                  St. Philip
+                </Link>
+              </li>
+              <li>
+                <Link href="/locations/st-paul" className="hover:text-white transition">
+                  St. Paul
+                </Link>
+              </li>
+              <li>
+                <Link href="/locations/st-mary" className="hover:text-white transition">
+                  St. Mary
+                </Link>
+              </li>
+              <li>
+                <Link href="/locations/st-george" className="hover:text-white transition">
+                  St. George
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -146,14 +107,14 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-5 w-5 flex-shrink-0" />
-                <a href="tel:+17057255824" className="hover:text-white transition">
-                  (705) 725-5824
+                <a href="tel:+12681234567" className="hover:text-white transition">
+                  +1 (268) 123-4567
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-5 w-5 flex-shrink-0" />
-                <a href="mailto:ross.caribbeankeys@gmail.com" className="hover:text-white transition">
-                  ross.caribbeankeys@gmail.com
+                <a href="mailto:info@caribbeankeysrealestate.com" className="hover:text-white transition">
+                  info@caribbeankeysrealestate.com
                 </a>
               </li>
             </ul>
