@@ -24,7 +24,6 @@ export function AdminNav() {
   const navigation = [
     { name: "Dashboard", href: "/admin/dashboard", icon: Home },
     { name: "Properties", href: "/admin/properties", icon: Building2 },
-    { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
   ]
 
   const handleLogout = async () => {
