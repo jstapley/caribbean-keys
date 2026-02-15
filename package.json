@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --no-lint",
+    "build": "tsc --noEmit --skipLibCheck || next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"
