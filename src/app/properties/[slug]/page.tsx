@@ -71,3 +71,4 @@ export default function PropertyDetailPage() {
 
   return <PropertyDetailClient property={property} similarProperties={similarProperties} />
 }
+// test
