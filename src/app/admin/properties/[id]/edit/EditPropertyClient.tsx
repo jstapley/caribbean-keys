@@ -123,18 +123,27 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
 
       if (updateError) throw updateError
 
-      // Redirect to properties list
+      // Success! Show confirmation and redirect
+      alert(`✅ Success!\n\n"${formData.property_name}" has been updated successfully.\n\nYou'll be redirected to the properties list.`)
       router.push('/admin/properties')
       router.refresh()
     } catch (error: any) {
       console.error('Error updating property:', error)
-      setError(error.message || 'Failed to update property')
+      
+      // Show user-friendly error message
+      let errorMessage = error.message
+      if (error.message.includes('violates')) {
+        errorMessage = 'A required field is missing or invalid. Please check all fields and try again.'
+      }
+      
+      alert(`❌ Error Updating Property\n\n${errorMessage}\n\nIf this problem persists, please contact support.`)
+      setError(errorMessage)
       setLoading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
+    if (!confirm(`⚠️ Delete "${property.property_name}"?\n\nThis will permanently remove this property from the website.\n\nThis action CANNOT be undone.\n\nAre you absolutely sure?`)) {
       return
     }
 
@@ -152,11 +161,14 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
 
       // TODO: Delete associated images from storage
 
+      alert(`✅ Property Deleted\n\n"${property.property_name}" has been permanently removed from the website.`)
       router.push('/admin/properties')
       router.refresh()
     } catch (error: any) {
       console.error('Error deleting property:', error)
-      setError(error.message || 'Failed to delete property')
+      const errorMessage = error.message || 'Failed to delete property'
+      alert(`❌ Error Deleting Property\n\n${errorMessage}\n\nThe property was not deleted. Please try again.`)
+      setError(errorMessage)
       setDeleting(false)
     }
   }

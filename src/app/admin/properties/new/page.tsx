@@ -82,11 +82,20 @@ export default function NewPropertyPage() {
 
       if (insertError) throw insertError
 
-      alert('Property created successfully!')
+      // Success! Redirect to properties list
+      alert(`✅ Success!\n\n"${data.property_name}" has been created and is now live on the website.\n\nYou'll be redirected to the properties list.`)
       router.push('/admin/properties')
+      
     } catch (error: any) {
       console.error('Error creating property:', error)
-      alert(`Error: ${error.message}`)
+      
+      // Show user-friendly error message
+      let errorMessage = error.message
+      if (error.message.includes('violates')) {
+        errorMessage = 'A required field is missing or invalid. Please check all fields and try again.'
+      }
+      
+      alert(`❌ Error Creating Property\n\n${errorMessage}\n\nIf this problem persists, please contact support.`)
     } finally {
       setLoading(false)
     }
