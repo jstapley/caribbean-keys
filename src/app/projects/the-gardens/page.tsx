@@ -1,4 +1,4 @@
-// @ts-nocheck 
+// @ts-nocheck
 "use client"
 
 import Image from "next/image"
@@ -207,7 +207,15 @@ export default function TheGardensPage() {
                   <div className="border-t pt-6">
                     <p className="text-sm text-gray-600 mb-2">Whole Ownership</p>
                     <p className="text-2xl font-bold text-caribbean-navy">{model.priceNote}</p>
-                    <p className="text-sm text-gray-600 mt-1">Lot, Villa & Furnishings included</p>
+                    <p className="text-sm text-gray-600 mt-1 mb-4">Lot, Villa & Furnishings included</p>
+                    <Button 
+                      asChild 
+                      className="w-full bg-caribbean-navy hover:bg-caribbean-navy/90 text-white"
+                    >
+                      <Link href={`/projects/the-gardens/${model.name.toLowerCase()}`}>
+                        More Details
+                      </Link>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -281,6 +289,44 @@ export default function TheGardensPage() {
             <p className="text-sm text-gray-600">
               This represents one of the final opportunities to enter Antigua's west coast at this stage of the market.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Location Map */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-caribbean-navy mb-4">
+              Prime West Coast Location
+            </h2>
+            <p className="text-lg text-gray-600">
+              Harbour Island, Jolly Harbour - Antigua's Premier Waterfront Community
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="relative h-[500px] w-full">
+              <iframe
+                src={`https://www.google.com/maps?q=17.07200,-61.88613&hl=es;z=14&output=embed`}
+                width="100%"
+                height="500"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="w-full h-full"
+              ></iframe>
+            </div>
+            <div className="p-6 bg-caribbean-navy text-white">
+              <div className="flex items-center gap-3">
+                <MapPin className="h-6 w-6 text-caribbean-gold" />
+                <div>
+                  <h3 className="font-bold text-lg">The Gardens</h3>
+                  <p className="text-gray-300">Harbour Island, Jolly Harbour, Antigua</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
