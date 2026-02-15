@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { formatDistanceToNow } from "date-fns"
 
 export default function InquiriesPage() {
   const [inquiries, setInquiries] = useState<any[]>([])
@@ -31,6 +30,11 @@ export default function InquiriesPage() {
 
     fetchInquiries()
   }, [])
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+  }
 
   return (
     <div className="p-6">
@@ -90,7 +94,7 @@ export default function InquiriesPage() {
                     <div className="text-sm text-gray-900">{inquiry.property_name || '-'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDistanceToNow(new Date(inquiry.created_at), { addSuffix: true })}
+                    {formatDate(inquiry.created_at)}
                   </td>
                 </tr>
               ))}
