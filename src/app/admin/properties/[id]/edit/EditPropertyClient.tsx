@@ -115,10 +115,10 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
       }
 
       // Update in Supabase
-      const { error: updateError } = await (supabase
+      const { error: updateError } = (await supabase
         .from('properties')
         .update(propertyData)
-        .eq('id', property.id) as any)
+        .eq('id', property.id)) as { error: any }
 
       if (updateError) throw updateError
 
