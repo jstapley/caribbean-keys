@@ -212,7 +212,7 @@ export default function TheGardensPage() {
                       asChild 
                       className="w-full bg-caribbean-navy hover:bg-caribbean-navy/90 text-white"
                     >
-                      <Link href={`/projects/the-gardens/${model.name.toLowerCase()}`}>
+                      <Link href={`/properties/the-${model.name.toLowerCase()}`}>
                         More Details
                       </Link>
                     </Button>
