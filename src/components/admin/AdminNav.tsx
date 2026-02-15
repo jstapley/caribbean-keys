@@ -22,8 +22,9 @@ export function AdminNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const navigation = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: Home },
+    { name: "Dashboard", href: "/admin", icon: Home },
     { name: "Properties", href: "/admin/properties", icon: Building2 },
+    { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
   ]
 
   const handleLogout = async () => {
@@ -37,7 +38,7 @@ export function AdminNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/admin/dashboard" className="flex items-center gap-3">
+          <Link href="/admin" className="flex items-center gap-3">
             <Image 
               src="/images/caribbean-keys-logo.png"
               alt="Caribbean Keys"
