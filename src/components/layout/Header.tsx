@@ -9,14 +9,21 @@ import { Button } from "@/components/ui/button"
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [locationsOpen, setLocationsOpen] = useState(false)
+  const [projectsOpen, setProjectsOpen] = useState(false)
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null)
+  const [projectsTimeoutId, setProjectsTimeoutId] = useState<NodeJS.Timeout | null>(null)
 
   const navigation = [
     { name: "HOME", href: "/" },
     { name: "PROPERTIES", href: "/properties" },
+    { name: "PROJECTS", href: "#", hasDropdown: true },
     { name: "LOCATIONS", href: "#", hasDropdown: true },
     { name: "ABOUT", href: "/about" },
     { name: "CONTACT", href: "/contact" },
+  ]
+
+  const projects = [
+    { name: "The Gardens", slug: "the-gardens", subtitle: "Jolly Harbour • CIP Approved" },
   ]
 
   const parishes = [
@@ -81,12 +88,22 @@ export function Header() {
                   key={item.name}
                   className="relative"
                   onMouseEnter={() => {
-                    if (timeoutId) clearTimeout(timeoutId)
-                    setLocationsOpen(true)
+                    if (item.name === "LOCATIONS") {
+                      if (timeoutId) clearTimeout(timeoutId)
+                      setLocationsOpen(true)
+                    } else if (item.name === "PROJECTS") {
+                      if (projectsTimeoutId) clearTimeout(projectsTimeoutId)
+                      setProjectsOpen(true)
+                    }
                   }}
                   onMouseLeave={() => {
-                    const id = setTimeout(() => setLocationsOpen(false), 200)
-                    setTimeoutId(id)
+                    if (item.name === "LOCATIONS") {
+                      const id = setTimeout(() => setLocationsOpen(false), 200)
+                      setTimeoutId(id)
+                    } else if (item.name === "PROJECTS") {
+                      const id = setTimeout(() => setProjectsOpen(false), 200)
+                      setProjectsTimeoutId(id)
+                    }
                   }}
                 >
                   <button
@@ -96,8 +113,24 @@ export function Header() {
                     <ChevronDown className="h-4 w-4" />
                   </button>
                   
-                  {/* Dropdown Menu */}
-                  {locationsOpen && (
+                  {/* Projects Dropdown */}
+                  {item.name === "PROJECTS" && projectsOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-72 bg-white shadow-lg rounded-lg py-2 border border-gray-100">
+                      {projects.map((project) => (
+                        <Link
+                          key={project.slug}
+                          href={`/projects/${project.slug}`}
+                          className="block px-4 py-3 hover:bg-caribbean-seafoam/20 transition"
+                        >
+                          <div className="font-semibold text-caribbean-navy">{project.name}</div>
+                          <div className="text-xs text-gray-600">{project.subtitle}</div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Locations Dropdown */}
+                  {item.name === "LOCATIONS" && locationsOpen && (
                     <div className="absolute top-full left-0 mt-1 w-64 bg-white shadow-lg rounded-lg py-2 border border-gray-100">
                       {parishes.map((parish) => (
                         <Link
@@ -161,12 +194,39 @@ export function Header() {
                 <div key={item.name}>
                   <button
                     className="w-full flex items-center justify-between px-3 py-2 text-base font-semibold text-caribbean-navy hover:bg-caribbean-blue/10 rounded-md tracking-wide"
-                    onClick={() => setLocationsOpen(!locationsOpen)}
+                    onClick={() => {
+                      if (item.name === "LOCATIONS") {
+                        setLocationsOpen(!locationsOpen)
+                      } else if (item.name === "PROJECTS") {
+                        setProjectsOpen(!projectsOpen)
+                      }
+                    }}
                   >
                     {item.name}
-                    <ChevronDown className={`h-4 w-4 transition-transform ${locationsOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 transition-transform ${
+                      (item.name === "LOCATIONS" && locationsOpen) || (item.name === "PROJECTS" && projectsOpen) ? 'rotate-180' : ''
+                    }`} />
                   </button>
-                  {locationsOpen && (
+                  
+                  {/* Projects Dropdown */}
+                  {item.name === "PROJECTS" && projectsOpen && (
+                    <div className="ml-4 mt-2 space-y-2">
+                      {projects.map((project) => (
+                        <Link
+                          key={project.slug}
+                          href={`/projects/${project.slug}`}
+                          className="block px-3 py-2 text-sm text-caribbean-navy hover:bg-caribbean-seafoam/20 rounded-md"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <div className="font-semibold">{project.name}</div>
+                          <div className="text-xs text-gray-600">{project.subtitle}</div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Locations Dropdown */}
+                  {item.name === "LOCATIONS" && locationsOpen && (
                     <div className="ml-4 mt-2 space-y-2">
                       {parishes.map((parish) => (
                         <Link
