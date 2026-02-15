@@ -70,7 +70,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div className="max-w-3xl">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
-                Best Real Estate Agent in Antigua & Barbuda
+                Your Trusted Real Estate Partner in Antigua & Barbuda
               </h1>
               <p className="text-xl sm:text-2xl mb-8 text-white/90">
                 Expert guidance for luxury real estate, beachfront villas, and investment opportunities across Antigua's premier communities
