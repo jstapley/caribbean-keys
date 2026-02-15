@@ -106,7 +106,7 @@ export default function AddPropertyPage() {
         .from('properties')
         .insert([propertyData])
         .select()
-        .single()
+        .single() as { data: any; error: any }
 
       if (insertError) {
         console.error('Insert error:', insertError)
