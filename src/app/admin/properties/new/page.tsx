@@ -30,7 +30,6 @@ export default function NewPropertyPage() {
     bathrooms: '',
     square_footage: '',
     price_asking: '',
-    price_rental: '',
     property_description: '',
     latitude: null as number | null,
     longitude: null as number | null,
@@ -62,7 +61,6 @@ export default function NewPropertyPage() {
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
         square_footage: formData.square_footage ? parseInt(formData.square_footage) : null,
         price_asking: formData.price_asking ? parseFloat(formData.price_asking) : null,
-        price_rental: formData.price_rental ? parseFloat(formData.price_rental) : null,
         property_description: formData.property_description,
         latitude: formData.latitude,
         longitude: formData.longitude,
@@ -267,19 +265,6 @@ export default function NewPropertyPage() {
                   value={formData.price_asking}
                   onChange={(e) => setFormData({ ...formData, price_asking: e.target.value })}
                   placeholder="500000"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="price_rental">Rental Price (USD/month)</Label>
-                <Input
-                  id="price_rental"
-                  type="number"
-                  min="0"
-                  step="100"
-                  value={formData.price_rental}
-                  onChange={(e) => setFormData({ ...formData, price_rental: e.target.value })}
-                  placeholder="2500"
                 />
               </div>
             </div>
