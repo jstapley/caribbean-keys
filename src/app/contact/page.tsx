@@ -52,15 +52,14 @@ export default function ContactPage() {
         name: `${formData.first_name.trim()} ${formData.last_name.trim()}`,
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
-        interest: formData.interest || null,
-        message: formData.message.trim() || null,
-        created_at: new Date().toISOString()
+        interest: formData.interest || 'General Inquiry',
+        message: formData.message.trim() || 'No message provided'
       }
 
       // 1. Save to Supabase
       const { data: supabaseData, error: supabaseError } = await supabase
         .from('property_inquiries')
-        .insert([inquiryData])
+        .insert([inquiryData] as any)
         .select()
         .single()
 
