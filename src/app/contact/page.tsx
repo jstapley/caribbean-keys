@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import { useState } from "react"
@@ -71,71 +70,6 @@ export default function ContactPage() {
       }
 
       console.log('Saved to Supabase:', supabaseData)
-
-      // 2. Send to GoHighLevel API (if configured)
-      try {
-        const ghlApiKey = process.env.NEXT_PUBLIC_GHL_API_KEY
-        const ghlLocationId = process.env.NEXT_PUBLIC_GHL_LOCATION_ID
-        
-        if (ghlApiKey && ghlLocationId) {
-          // Build tags array - always include "Website Lead" + the interest if selected
-          const tags = ['Website Lead']
-          if (formData.interest) {
-            // Convert interest to short-form tag
-            const interestTagMap: Record<string, string> = {
-              'Citizenship by Investment': 'CIP',
-              'Investment': 'Invest',
-              'Buying': 'Buy',
-              'Selling': 'Sell',
-              'Renting': 'Rent'
-            }
-            const interestTag = interestTagMap[formData.interest] || formData.interest
-            tags.push(interestTag)
-          }
-
-          const ghlPayload = {
-            firstName: formData.first_name.trim(),
-            lastName: formData.last_name.trim(),
-            email: formData.email.trim().toLowerCase(),
-            phone: formData.phone.trim(),
-            source: 'Caribbean Keys Website',
-            tags: tags,
-            customFields: [
-              {
-                key: 'message',
-                value: formData.message.trim() || 'No message provided'
-              }
-            ]
-          }
-
-          const ghlResponse = await fetch(`https://services.leadconnectorhq.com/contacts/`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${ghlApiKey}`,
-              'Content-Type': 'application/json',
-              'Version': '2021-07-28'
-            },
-            body: JSON.stringify({
-              ...ghlPayload,
-              locationId: ghlLocationId
-            })
-          })
-
-          if (ghlResponse.ok) {
-            const ghlData = await ghlResponse.json()
-            console.log('Contact created in GHL:', ghlData)
-          } else {
-            const errorText = await ghlResponse.text()
-            console.warn('GHL API failed:', errorText)
-            console.warn('But inquiry saved to database successfully')
-          }
-        } else {
-          console.log('GHL API credentials not configured')
-        }
-      } catch (ghlError) {
-        // GHL error doesn't fail the submission since we have it in Supabase
-        console.warn('GHL API error:', ghlError)
-      }
 
       // Success!
       setSuccess(true)

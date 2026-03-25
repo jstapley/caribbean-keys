@@ -78,10 +78,9 @@ export default function TheGardensPage() {
                 size="lg"
                 className="bg-caribbean-gold hover:bg-caribbean-gold/90 text-caribbean-navy font-bold uppercase"
               >
-                <a href="https://api.leadconnectorhq.com/widget/booking/SvIBBVEDScQOGhfhK5eS" target="_blank" rel="noopener noreferrer">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Schedule Viewing
-                </a>
+                <Link href="/contact">
+                  Request Information
+                </Link>
               </Button>
               <Button 
                 asChild 
@@ -89,9 +88,10 @@ export default function TheGardensPage() {
                 variant="outline"
                 className="bg-white hover:bg-gray-100 text-caribbean-navy border-2 font-bold uppercase"
               >
-                <Link href="/contact">
-                  Request Information
-                </Link>
+                <a href="tel:+17057255824">
+                  <Phone className="h-5 w-5 mr-2" />
+                  (705) 725-5824
+                </a>
               </Button>
             </div>
           </div>
@@ -338,7 +338,7 @@ export default function TheGardensPage() {
             Ready to Learn More About The Gardens?
           </h2>
           <p className="text-xl mb-8 text-gray-200">
-            Contact us today to schedule a viewing, request floor plans, or discuss CIP eligibility.
+            Contact us today to request floor plans or discuss CIP eligibility.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -346,10 +346,9 @@ export default function TheGardensPage() {
               size="lg"
               className="bg-caribbean-gold hover:bg-caribbean-gold/90 text-caribbean-navy font-bold uppercase"
             >
-              <a href="https://api.leadconnectorhq.com/widget/booking/SvIBBVEDScQOGhfhK5eS" target="_blank" rel="noopener noreferrer">
-                <Calendar className="h-5 w-5 mr-2" />
-                Schedule Viewing
-              </a>
+              <Link href="/contact">
+                Request Information
+              </Link>
             </Button>
             <Button 
               asChild 

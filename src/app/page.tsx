@@ -70,7 +70,7 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <div className="max-w-3xl">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-white">
-                Your Trusted Real Estate Partner in Antigua & Barbuda
+                YOUR TRUSTED REAL ESTATE PARTNER IN ANTIGUA
               </h1>
               <p className="text-xl sm:text-2xl mb-8 text-white/90">
                 Expert guidance for luxury real estate, beachfront villas, and investment opportunities across Antigua's premier communities
@@ -80,13 +80,9 @@ export default function HomePage() {
                   <Link href="/properties">Browse Properties</Link>
                 </Button>
                 <Button size="lg" asChild className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-caribbean-navy backdrop-blur-sm font-semibold">
-                  <a 
-                    href="https://api.leadconnectorhq.com/widget/booking/SvIBBVEDScQOGhfhK5eS"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Schedule Viewing
-                  </a>
+                  <Link href="/contact">
+                    Contact Us
+                  </Link>
                 </Button>
               </div>
             </div>

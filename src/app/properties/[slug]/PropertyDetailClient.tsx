@@ -122,7 +122,7 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
         created_at: new Date().toISOString()
       }
 
-      // 1. Save to Supabase
+      // Save to Supabase
       const { error: supabaseError } = await supabase
         .from('property_inquiries')
         .insert([inquiryData])
@@ -130,50 +130,6 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
       if (supabaseError) {
         console.error('Supabase error:', supabaseError)
         throw new Error('Failed to submit inquiry. Please try again.')
-      }
-
-      // 2. Send to GoHighLevel API
-      try {
-        const ghlApiKey = process.env.NEXT_PUBLIC_GHL_API_KEY
-        const ghlLocationId = process.env.NEXT_PUBLIC_GHL_LOCATION_ID
-        
-        if (ghlApiKey && ghlLocationId) {
-          const tags = ['Website Lead', 'Property Inquiry', property.parish]
-
-          const ghlPayload = {
-            firstName: inquiryForm.first_name.trim(),
-            lastName: inquiryForm.last_name.trim(),
-            email: inquiryForm.email.trim().toLowerCase(),
-            phone: inquiryForm.phone.trim(),
-            source: `Caribbean Keys - ${property.property_name}`,
-            tags: tags,
-            customFields: [
-              {
-                key: 'property_interest',
-                value: property.property_name
-              },
-              {
-                key: 'message',
-                value: propertyMessage
-              }
-            ]
-          }
-
-          await fetch(`https://services.leadconnectorhq.com/contacts/`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${ghlApiKey}`,
-              'Content-Type': 'application/json',
-              'Version': '2021-07-28'
-            },
-            body: JSON.stringify({
-              ...ghlPayload,
-              locationId: ghlLocationId
-            })
-          })
-        }
-      } catch (ghlError) {
-        console.warn('GHL API error:', ghlError)
       }
 
       // Success!
@@ -542,20 +498,6 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
               </form>
 
               <div className="mt-6 pt-6 border-t space-y-3">
-                <Button 
-                  className="w-full bg-caribbean-navy hover:bg-caribbean-navy/90 text-white font-semibold"
-                  asChild
-                >
-                  <a 
-                    href="https://api.leadconnectorhq.com/widget/booking/SvIBBVEDScQOGhfhK5eS"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Schedule Viewing
-                  </a>
-                </Button>
-
                 <a
                   href="tel:+17057255824"
                   className="flex items-center justify-center w-full px-4 py-2 border-2 border-caribbean-gold text-caribbean-gold hover:bg-caribbean-gold hover:text-white rounded-md transition font-semibold"
