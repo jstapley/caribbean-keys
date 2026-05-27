@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Camera, Upload, Sparkles, RefreshCw, Download, Lock, ChevronDown } from "lucide-react"
 
-const PIN = "0268" // Change this to whatever Ross wants
+const PIN = "0268"
 
 const STYLES = [
   { id: "Modern Luxury", label: "Modern Luxury", emoji: "✨" },
@@ -77,8 +77,30 @@ export default function VisualizerPage() {
     const reader = new FileReader()
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string
-      setImage(dataUrl)
-      try { localStorage.setItem("visualizer_image", dataUrl) } catch(e) {}
+
+      // Compress image using canvas before storing in localStorage
+      const img = document.createElement("img")
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        const MAX = 800
+        let w = img.width, h = img.height
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX }
+          else { w = Math.round(w * MAX / h); h = MAX }
+        }
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext("2d")
+        ctx.fillStyle = "#ffffff"
+        ctx.fillRect(0, 0, w, h)
+        ctx.drawImage(img, 0, 0, w, h)
+        const compressed = canvas.toDataURL("image/jpeg", 0.8)
+        setImage(compressed)
+        try { localStorage.setItem("visualizer_image", compressed) } catch(e) {
+          console.warn("Image too large for localStorage")
+        }
+      }
+      img.src = dataUrl
     }
     reader.readAsDataURL(file)
   }
