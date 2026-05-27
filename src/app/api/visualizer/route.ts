@@ -20,26 +20,56 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Step 1: Upload image to Replicate first, get back a URL
+    // Strip the data URI prefix to get raw base64
+    const base64Data = imageBase64.includes(",") 
+      ? imageBase64.split(",")[1] 
+      : imageBase64
+
+    const mimeType = imageBase64.includes("data:") 
+      ? imageBase64.split(";")[0].split(":")[1] 
+      : "image/jpeg"
+
+    // Convert base64 to binary buffer
+    const binaryData = Buffer.from(base64Data, "base64")
+
+    // Upload to Replicate's file storage
+    const uploadResponse = await fetch("https://api.replicate.com/v1/files", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+        "Content-Type": mimeType,
+        "Content-Length": binaryData.length.toString(),
+      },
+      body: binaryData,
+    })
+
+    if (!uploadResponse.ok) {
+      const uploadError = await uploadResponse.text()
+      console.error("Upload error:", uploadError)
+      return NextResponse.json(
+        { error: "Failed to upload image to Replicate" },
+        { status: 500 }
+      )
+    }
+
+    const uploadedFile = await uploadResponse.json()
+    const imageUrl = uploadedFile.urls?.get || uploadedFile.url
+    console.log("Image uploaded to Replicate:", imageUrl)
+
+    // Step 2: Run the model with the uploaded image URL
     const prompt = `A beautifully redesigned ${roomType} in ${style} style. Professional interior design photography, high-end renovation, bright and airy, magazine quality, photorealistic.`
 
-    // Convert base64 to a data URI that Replicate can use
-    // The image arrives as a full data URI (data:image/jpeg;base64,...)
-    const imageDataUri = imageBase64.startsWith("data:") 
-      ? imageBase64 
-      : `data:image/jpeg;base64,${imageBase64}`
-
-    // Use the standard predictions endpoint with version hash
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiToken}`,
         "Content-Type": "application/json",
-        "Prefer": "wait=60",
       },
       body: JSON.stringify({
         version: "76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38",
         input: {
-          image: imageDataUri,
+          image: imageUrl,
           prompt: prompt,
           negative_prompt: "ugly, blurry, low quality, distorted, deformed, cartoon, sketch, watermark",
           guidance_scale: 15,
@@ -51,32 +81,30 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error("Replicate API error:", error)
+      console.error("Replicate prediction error:", error)
       return NextResponse.json(
-        { error: `Replicate error: ${error}` },
+        { error: `Failed to start generation: ${error}` },
         { status: 500 }
       )
     }
 
     const prediction = await response.json()
-    console.log("Initial prediction:", JSON.stringify(prediction))
+    console.log("Prediction started:", prediction.id, "status:", prediction.status)
 
-    // Poll for completion (max 90 seconds)
+    // Step 3: Poll for completion
     let result = prediction
     let attempts = 0
-    const maxAttempts = 45 // 45 * 2s = 90s
+    const maxAttempts = 45
 
     while (result.status !== "succeeded" && result.status !== "failed" && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 2000))
       
       const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
-        headers: {
-          "Authorization": `Bearer ${apiToken}`,
-        }
+        headers: { "Authorization": `Bearer ${apiToken}` }
       })
       
       result = await pollResponse.json()
-      console.log(`Poll ${attempts + 1}: status = ${result.status}`)
+      console.log(`Poll ${attempts + 1}: ${result.status}`)
       attempts++
     }
 
@@ -90,13 +118,12 @@ export async function POST(request: NextRequest) {
 
     if (result.status !== "succeeded") {
       return NextResponse.json(
-        { error: "Image generation timed out after 90 seconds" },
+        { error: "Timed out waiting for image generation" },
         { status: 500 }
       )
     }
 
     const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output
-
     return NextResponse.json({ imageUrl: outputUrl })
 
   } catch (error: any) {
