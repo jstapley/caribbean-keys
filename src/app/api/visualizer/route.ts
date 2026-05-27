@@ -6,58 +6,52 @@ export async function POST(request: NextRequest) {
     const { imageBase64, style, roomType } = await request.json()
 
     if (!imageBase64 || !style || !roomType) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
     const apiToken = process.env.REPLICATE_API_TOKEN
     if (!apiToken) {
-      return NextResponse.json(
-        { error: "Replicate API token not configured" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: "Replicate API token not configured" }, { status: 500 })
     }
 
-    // Step 1: Upload image to Replicate first, get back a URL
-    // Strip the data URI prefix to get raw base64
-    const base64Data = imageBase64.includes(",") 
-      ? imageBase64.split(",")[1] 
+    // Strip data URI prefix to get raw base64
+    const base64Data = imageBase64.includes(",")
+      ? imageBase64.split(",")[1]
       : imageBase64
 
-    const mimeType = imageBase64.includes("data:") 
-      ? imageBase64.split(";")[0].split(":")[1] 
+    const mimeType = imageBase64.includes("data:")
+      ? imageBase64.split(";")[0].split(":")[1]
       : "image/jpeg"
 
-    // Convert base64 to binary buffer
+    // Convert to binary blob
     const binaryData = Buffer.from(base64Data, "base64")
 
-    // Upload to Replicate's file storage
+    // Upload as multipart form to Replicate
+    const formData = new FormData()
+    const blob = new Blob([binaryData], { type: mimeType })
+    formData.append("content", blob, "image.jpg")
+
     const uploadResponse = await fetch("https://api.replicate.com/v1/files", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiToken}`,
-        "Content-Type": mimeType,
-        "Content-Length": binaryData.length.toString(),
       },
-      body: binaryData,
+      body: formData,
     })
 
     if (!uploadResponse.ok) {
       const uploadError = await uploadResponse.text()
       console.error("Upload error:", uploadError)
-      return NextResponse.json(
-        { error: "Failed to upload image to Replicate" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: `Image upload failed: ${uploadError}` }, { status: 500 })
     }
 
     const uploadedFile = await uploadResponse.json()
-    const imageUrl = uploadedFile.urls?.get || uploadedFile.url
-    console.log("Image uploaded to Replicate:", imageUrl)
+    console.log("Uploaded file:", JSON.stringify(uploadedFile))
 
-    // Step 2: Run the model with the uploaded image URL
+    const imageUrl = uploadedFile.urls?.get || uploadedFile.url
+    console.log("Image URL:", imageUrl)
+
+    // Run the model
     const prompt = `A beautifully redesigned ${roomType} in ${style} style. Professional interior design photography, high-end renovation, bright and airy, magazine quality, photorealistic.`
 
     const response = await fetch("https://api.replicate.com/v1/predictions", {
@@ -81,46 +75,33 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error("Replicate prediction error:", error)
-      return NextResponse.json(
-        { error: `Failed to start generation: ${error}` },
-        { status: 500 }
-      )
+      console.error("Prediction error:", error)
+      return NextResponse.json({ error: `Failed to start generation: ${error}` }, { status: 500 })
     }
 
     const prediction = await response.json()
-    console.log("Prediction started:", prediction.id, "status:", prediction.status)
+    console.log("Prediction started:", prediction.id)
 
-    // Step 3: Poll for completion
+    // Poll for completion
     let result = prediction
     let attempts = 0
-    const maxAttempts = 45
 
-    while (result.status !== "succeeded" && result.status !== "failed" && attempts < maxAttempts) {
+    while (result.status !== "succeeded" && result.status !== "failed" && attempts < 45) {
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
       const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
         headers: { "Authorization": `Bearer ${apiToken}` }
       })
-      
       result = await pollResponse.json()
       console.log(`Poll ${attempts + 1}: ${result.status}`)
       attempts++
     }
 
     if (result.status === "failed") {
-      console.error("Generation failed:", result.error)
-      return NextResponse.json(
-        { error: result.error || "Image generation failed" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: result.error || "Generation failed" }, { status: 500 })
     }
 
     if (result.status !== "succeeded") {
-      return NextResponse.json(
-        { error: "Timed out waiting for image generation" },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: "Timed out waiting for generation" }, { status: 500 })
     }
 
     const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output
@@ -128,9 +109,6 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error("Visualizer error:", error)
-    return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
   }
 }
