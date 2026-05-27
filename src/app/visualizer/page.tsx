@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Camera, Upload, Sparkles, RefreshCw, Download, Lock, ChevronDown } from "lucide-react"
 
-const PIN = "1234" // Change this to whatever Ross wants
+const PIN = "0268" // Change this to whatever Ross wants
 
 const STYLES = [
   { id: "Modern Luxury", label: "Modern Luxury", emoji: "✨" },
@@ -46,6 +46,13 @@ export default function VisualizerPage() {
   useEffect(() => {
     const saved = sessionStorage.getItem("visualizer_unlocked")
     if (saved === "true") setUnlocked(true)
+
+    // Restore image if it was saved before camera remount
+    const savedImage = sessionStorage.getItem("visualizer_image")
+    if (savedImage) {
+      setImage(savedImage)
+      sessionStorage.removeItem("visualizer_image")
+    }
   }, [])
 
   const handleUnlock = () => {
@@ -68,12 +75,21 @@ export default function VisualizerPage() {
     setResult(null)
     setError("")
     const reader = new FileReader()
-    reader.onload = (e) => setImage(e.target?.result as string)
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string
+      setImage(dataUrl)
+      // Save to sessionStorage in case mobile remounts the page after camera
+      try {
+        sessionStorage.setItem("visualizer_image", dataUrl)
+      } catch (e) {
+        // Image too large for sessionStorage, ignore
+      }
+    }
     reader.readAsDataURL(file)
   }
 
   const handleGenerate = async () => {
-    if (!imageFile || !image) return
+    if (!image) return
 
     setLoading(true)
     setError("")
