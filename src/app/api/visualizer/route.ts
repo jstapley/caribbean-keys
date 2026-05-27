@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from "next/server"
+import sharp from "sharp"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,37 +15,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Replicate API token not configured" }, { status: 500 })
     }
 
-    // Strip data URI prefix to get raw base64
+    // Strip data URI prefix
     const base64Data = imageBase64.includes(",")
       ? imageBase64.split(",")[1]
       : imageBase64
 
-    // Convert to binary, then re-encode as plain JPEG data URI
-    // This strips any alpha channel / RGBA issues the model can't handle
-    const binaryData = Buffer.from(base64Data, "base64")
+    const inputBuffer = Buffer.from(base64Data, "base64")
 
-    // Upload as JPEG to Replicate files API - forcing JPEG strips alpha channel
-    const formData = new FormData()
-    const blob = new Blob([binaryData], { type: "image/jpeg" })
-    formData.append("content", blob, "room.jpg")
+    // Use Sharp to resize (max 1024px) and convert to clean RGB JPEG
+    const jpegBuffer = await sharp(inputBuffer)
+      .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
+      .flatten({ background: { r: 255, g: 255, b: 255 } })
+      .jpeg({ quality: 85 })
+      .toBuffer()
 
-    const uploadResponse = await fetch("https://api.replicate.com/v1/files", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiToken}`,
-      },
-      body: formData,
-    })
-
-    if (!uploadResponse.ok) {
-      const uploadError = await uploadResponse.text()
-      console.error("Upload error:", uploadError)
-      return NextResponse.json({ error: `Image upload failed: ${uploadError}` }, { status: 500 })
-    }
-
-    const uploadedFile = await uploadResponse.json()
-    const imageUrl = uploadedFile.urls?.get
-    console.log("Uploaded as JPEG, URL:", imageUrl)
+    // Pass as data URI directly in the prediction input
+    const jpegDataUri = `data:image/jpeg;base64,${jpegBuffer.toString("base64")}`
+    console.log("JPEG data URI length:", jpegDataUri.length)
 
     const prompt = `A beautifully redesigned ${roomType} in ${style} style. Professional interior design photography, high-end renovation, bright and airy, magazine quality, photorealistic.`
 
@@ -57,7 +44,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         version: "76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38",
         input: {
-          image: imageUrl,
+          image: jpegDataUri,
           prompt: prompt,
           negative_prompt: "ugly, blurry, low quality, distorted, deformed, cartoon, sketch, watermark",
           guidance_scale: 15,
@@ -74,7 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     const prediction = await response.json()
-    console.log("Prediction started:", prediction.id)
+    console.log("Prediction started:", prediction.id, "status:", prediction.status)
 
     // Poll for completion
     let result = prediction
