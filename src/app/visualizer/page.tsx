@@ -77,31 +77,16 @@ export default function VisualizerPage() {
     const reader = new FileReader()
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string
-
-      // Compress image using canvas before storing in localStorage
-      const img = document.createElement("img")
-      img.onload = () => {
-        const canvas = document.createElement("canvas")
-        const MAX = 800
-        let w = img.width, h = img.height
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX }
-          else { w = Math.round(w * MAX / h); h = MAX }
-        }
-        canvas.width = w
-        canvas.height = h
-        const ctx = canvas.getContext("2d")
-        ctx.fillStyle = "#ffffff"
-        ctx.fillRect(0, 0, w, h)
-        ctx.drawImage(img, 0, 0, w, h)
-        const compressed = canvas.toDataURL("image/jpeg", 0.8)
-        setImage(compressed)
-        try { localStorage.setItem("visualizer_image", compressed) } catch(e) {
-          console.warn("Image too large for localStorage")
-        }
+      console.log("Image loaded, dataUrl length:", dataUrl?.length)
+      setImage(dataUrl)
+      try {
+        localStorage.setItem("visualizer_image", dataUrl)
+        console.log("Saved to localStorage, length:", localStorage.getItem("visualizer_image")?.length)
+      } catch(e) {
+        console.warn("localStorage save failed:", e)
       }
-      img.src = dataUrl
     }
+    reader.onerror = (e) => console.error("FileReader error:", e)
     reader.readAsDataURL(file)
   }
 
