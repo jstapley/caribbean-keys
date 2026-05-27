@@ -22,18 +22,26 @@ export async function POST(request: NextRequest) {
 
     const prompt = `A beautifully redesigned ${roomType} in ${style} style. Professional interior design photography, high-end renovation, bright and airy, magazine quality, photorealistic.`
 
-    // Start the prediction
-    const response = await fetch("https://api.replicate.com/v1/models/adirik/interior-design/predictions", {
+    // Convert base64 to a data URI that Replicate can use
+    // The image arrives as a full data URI (data:image/jpeg;base64,...)
+    const imageDataUri = imageBase64.startsWith("data:") 
+      ? imageBase64 
+      : `data:image/jpeg;base64,${imageBase64}`
+
+    // Use the standard predictions endpoint with version hash
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiToken}`,
         "Content-Type": "application/json",
+        "Prefer": "wait=60",
       },
       body: JSON.stringify({
+        version: "76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38",
         input: {
-          image: imageBase64,
+          image: imageDataUri,
           prompt: prompt,
-          negative_prompt: "ugly, blurry, low quality, distorted, deformed, cartoon, sketch",
+          negative_prompt: "ugly, blurry, low quality, distorted, deformed, cartoon, sketch, watermark",
           guidance_scale: 15,
           prompt_strength: 0.8,
           num_inference_steps: 50,
@@ -43,19 +51,20 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error("Replicate error:", error)
+      console.error("Replicate API error:", error)
       return NextResponse.json(
-        { error: "Failed to start image generation" },
+        { error: `Replicate error: ${error}` },
         { status: 500 }
       )
     }
 
     const prediction = await response.json()
+    console.log("Initial prediction:", JSON.stringify(prediction))
 
-    // Poll for completion (max 60 seconds)
+    // Poll for completion (max 90 seconds)
     let result = prediction
     let attempts = 0
-    const maxAttempts = 30
+    const maxAttempts = 45 // 45 * 2s = 90s
 
     while (result.status !== "succeeded" && result.status !== "failed" && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 2000))
@@ -67,31 +76,33 @@ export async function POST(request: NextRequest) {
       })
       
       result = await pollResponse.json()
+      console.log(`Poll ${attempts + 1}: status = ${result.status}`)
       attempts++
     }
 
     if (result.status === "failed") {
+      console.error("Generation failed:", result.error)
       return NextResponse.json(
-        { error: "Image generation failed" },
+        { error: result.error || "Image generation failed" },
         { status: 500 }
       )
     }
 
     if (result.status !== "succeeded") {
       return NextResponse.json(
-        { error: "Image generation timed out" },
+        { error: "Image generation timed out after 90 seconds" },
         { status: 500 }
       )
     }
 
-    return NextResponse.json({
-      imageUrl: Array.isArray(result.output) ? result.output[0] : result.output
-    })
+    const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output
 
-  } catch (error) {
+    return NextResponse.json({ imageUrl: outputUrl })
+
+  } catch (error: any) {
     console.error("Visualizer error:", error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error.message || "Internal server error" },
       { status: 500 }
     )
   }
