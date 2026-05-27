@@ -47,14 +47,9 @@ export function GoogleReviews() {
           <h2 className="text-3xl sm:text-4xl font-bold text-caribbean-navy mb-4">
             What Our Clients Say
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-4">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Read reviews from clients who trusted us with their Caribbean real estate journey
           </p>
-          <div className="flex items-center justify-center gap-2 text-gray-600">
-            <span className="text-2xl font-bold text-caribbean-navy">{averageRating}</span>
-            <span>based on</span>
-            <span className="font-semibold">{totalReviews} Google reviews</span>
-          </div>
         </div>
 
         {/* Reviews Grid */}
