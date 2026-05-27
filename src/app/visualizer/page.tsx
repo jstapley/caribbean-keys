@@ -1,11 +1,11 @@
 // @ts-nocheck
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { Camera, Upload, Sparkles, RefreshCw, Download, Lock, ChevronDown } from "lucide-react"
 
-const PIN = "0268" // Change this to whatever Ross wants
+const PIN = "1234" // Change this to whatever Ross wants
 
 const STYLES = [
   { id: "Modern Luxury", label: "Modern Luxury", emoji: "✨" },
@@ -42,17 +42,29 @@ export default function VisualizerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  const handlePinSubmit = () => {
-    if (pin === PIN) {
-      setUnlocked(true)
+  // Persist unlocked state in sessionStorage so camera capture doesn't reset it
+  useEffect(() => {
+    const saved = sessionStorage.getItem("visualizer_unlocked")
+    if (saved === "true") setUnlocked(true)
+  }, [])
+
+  const handleUnlock = () => {
+    setUnlocked(true)
+    sessionStorage.setItem("visualizer_unlocked", "true")
+  }
+      setPin("")
+    }
+  }
+
+  const handlePinSubmit = (newPin: string) => {
+    if (newPin === PIN) {
+      handleUnlock()
       setPinError(false)
     } else {
       setPinError(true)
       setPin("")
     }
   }
-
-  const handleImageSelect = (file: File) => {
     setImageFile(file)
     setResult(null)
     setError("")
@@ -145,15 +157,7 @@ export default function VisualizerPage() {
                     const newPin = pin + key
                     setPin(newPin)
                     if (newPin.length === 4) {
-                      setTimeout(() => {
-                        if (newPin === PIN) {
-                          setUnlocked(true)
-                          setPinError(false)
-                        } else {
-                          setPinError(true)
-                          setPin("")
-                        }
-                      }, 200)
+                      setTimeout(() => handlePinSubmit(newPin), 200)
                     }
                   }
                 }}
