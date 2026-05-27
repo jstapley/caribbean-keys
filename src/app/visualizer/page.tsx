@@ -233,40 +233,31 @@ export default function VisualizerPage() {
 
           {!image ? (
             <div className="p-5 grid grid-cols-2 gap-3">
-              {/* Camera */}
-              <button
-                onClick={() => cameraInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-caribbean-gold hover:bg-caribbean-gold/5 transition active:scale-95"
-              >
+              {/* Camera - label wraps input directly, most reliable on iOS */}
+              <label className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-caribbean-gold hover:bg-caribbean-gold/5 transition active:scale-95 cursor-pointer">
                 <Camera className="h-8 w-8 text-caribbean-gold" />
                 <span className="text-sm font-semibold text-gray-700">Take Photo</span>
                 <span className="text-xs text-gray-400">Use camera</span>
-              </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
+                />
+              </label>
 
-              {/* Upload */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-caribbean-gold hover:bg-caribbean-gold/5 transition active:scale-95"
-              >
+              {/* Upload - label wraps input directly */}
+              <label className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-caribbean-gold hover:bg-caribbean-gold/5 transition active:scale-95 cursor-pointer">
                 <Upload className="h-8 w-8 text-caribbean-gold" />
                 <span className="text-sm font-semibold text-gray-700">Upload Photo</span>
                 <span className="text-xs text-gray-400">From gallery</span>
-              </button>
-
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
-              />
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
-              />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
+                />
+              </label>
             </div>
           ) : (
             <div className="p-5">
@@ -279,19 +270,15 @@ export default function VisualizerPage() {
                   ✕
                 </button>
               </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="mt-3 text-sm text-caribbean-gold font-semibold hover:underline"
-              >
+              <label className="mt-3 text-sm text-caribbean-gold font-semibold hover:underline cursor-pointer inline-block">
                 Change photo
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
-              />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
+                />
+              </label>
             </div>
           )}
         </div>
