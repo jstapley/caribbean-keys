@@ -52,9 +52,6 @@ export default function VisualizerPage() {
     setUnlocked(true)
     sessionStorage.setItem("visualizer_unlocked", "true")
   }
-      setPin("")
-    }
-  }
 
   const handlePinSubmit = (newPin: string) => {
     if (newPin === PIN) {
@@ -65,6 +62,8 @@ export default function VisualizerPage() {
       setPin("")
     }
   }
+
+  const handleImageSelect = (file: File) => {
     setImageFile(file)
     setResult(null)
     setError("")
