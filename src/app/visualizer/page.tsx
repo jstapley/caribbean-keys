@@ -229,6 +229,14 @@ export default function VisualizerPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
+        {/* DEBUG - remove later */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-800 space-y-1">
+          <p>unlocked: {unlocked ? "✅ yes" : "❌ no"}</p>
+          <p>image: {image ? `✅ yes (${image.length} chars)` : "❌ none"}</p>
+          <p>localStorage unlocked: {typeof window !== "undefined" ? localStorage.getItem("visualizer_unlocked") || "null" : "SSR"}</p>
+          <p>localStorage image: {typeof window !== "undefined" ? (localStorage.getItem("visualizer_image") ? `${localStorage.getItem("visualizer_image")?.length} chars` : "null") : "SSR"}</p>
+        </div>
+
         {/* Step 1: Upload Photo */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
