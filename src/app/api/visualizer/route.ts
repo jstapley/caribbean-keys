@@ -14,46 +14,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Replicate API token not configured" }, { status: 500 })
     }
 
-    // Strip data URI prefix to get raw base64
-    const base64Data = imageBase64.includes(",")
-      ? imageBase64.split(",")[1]
-      : imageBase64
-
-    const mimeType = imageBase64.includes("data:")
-      ? imageBase64.split(";")[0].split(":")[1]
-      : "image/jpeg"
-
-    // Convert to binary blob
-    const binaryData = Buffer.from(base64Data, "base64")
-
-    // Upload as multipart form to Replicate
-    const formData = new FormData()
-    const blob = new Blob([binaryData], { type: mimeType })
-    formData.append("content", blob, "image.jpg")
-
-    const uploadResponse = await fetch("https://api.replicate.com/v1/files", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiToken}`,
-      },
-      body: formData,
-    })
-
-    if (!uploadResponse.ok) {
-      const uploadError = await uploadResponse.text()
-      console.error("Upload error:", uploadError)
-      return NextResponse.json({ error: `Image upload failed: ${uploadError}` }, { status: 500 })
-    }
-
-    const uploadedFile = await uploadResponse.json()
-    console.log("Uploaded file:", JSON.stringify(uploadedFile))
-
-    const imageUrl = uploadedFile.urls?.get || uploadedFile.url
-    console.log("Image URL:", imageUrl)
-
-    // Run the model
     const prompt = `A beautifully redesigned ${roomType} in ${style} style. Professional interior design photography, high-end renovation, bright and airy, magazine quality, photorealistic.`
 
+    // Ensure image is a proper data URI
+    const imageDataUri = imageBase64.startsWith("data:")
+      ? imageBase64
+      : `data:image/jpeg;base64,${imageBase64}`
+
+    console.log("Starting prediction with data URI, length:", imageDataUri.length)
+
+    // Pass data URI directly - Replicate supports this
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -63,7 +33,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         version: "76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38",
         input: {
-          image: imageUrl,
+          image: imageDataUri,
           prompt: prompt,
           negative_prompt: "ugly, blurry, low quality, distorted, deformed, cartoon, sketch, watermark",
           guidance_scale: 15,
@@ -75,12 +45,12 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const error = await response.text()
-      console.error("Prediction error:", error)
-      return NextResponse.json({ error: `Failed to start generation: ${error}` }, { status: 500 })
+      console.error("Prediction start error:", error)
+      return NextResponse.json({ error: `Failed to start: ${error}` }, { status: 500 })
     }
 
     const prediction = await response.json()
-    console.log("Prediction started:", prediction.id)
+    console.log("Prediction started:", prediction.id, "status:", prediction.status)
 
     // Poll for completion
     let result = prediction
@@ -92,16 +62,17 @@ export async function POST(request: NextRequest) {
         headers: { "Authorization": `Bearer ${apiToken}` }
       })
       result = await pollResponse.json()
-      console.log(`Poll ${attempts + 1}: ${result.status}`)
+      console.log(`Poll ${attempts + 1}: ${result.status}${result.error ? " - " + result.error : ""}`)
       attempts++
     }
 
     if (result.status === "failed") {
+      console.error("Full failed result:", JSON.stringify(result))
       return NextResponse.json({ error: result.error || "Generation failed" }, { status: 500 })
     }
 
     if (result.status !== "succeeded") {
-      return NextResponse.json({ error: "Timed out waiting for generation" }, { status: 500 })
+      return NextResponse.json({ error: "Timed out" }, { status: 500 })
     }
 
     const outputUrl = Array.isArray(result.output) ? result.output[0] : result.output
