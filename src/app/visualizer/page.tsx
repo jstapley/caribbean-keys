@@ -257,7 +257,6 @@ export default function VisualizerPage() {
                 ref={cameraInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
               />
