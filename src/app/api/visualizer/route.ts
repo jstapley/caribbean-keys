@@ -14,16 +14,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Replicate API token not configured" }, { status: 500 })
     }
 
+    // Strip data URI prefix to get raw base64
+    const base64Data = imageBase64.includes(",")
+      ? imageBase64.split(",")[1]
+      : imageBase64
+
+    // Convert to binary, then re-encode as plain JPEG data URI
+    // This strips any alpha channel / RGBA issues the model can't handle
+    const binaryData = Buffer.from(base64Data, "base64")
+
+    // Upload as JPEG to Replicate files API - forcing JPEG strips alpha channel
+    const formData = new FormData()
+    const blob = new Blob([binaryData], { type: "image/jpeg" })
+    formData.append("content", blob, "room.jpg")
+
+    const uploadResponse = await fetch("https://api.replicate.com/v1/files", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+      },
+      body: formData,
+    })
+
+    if (!uploadResponse.ok) {
+      const uploadError = await uploadResponse.text()
+      console.error("Upload error:", uploadError)
+      return NextResponse.json({ error: `Image upload failed: ${uploadError}` }, { status: 500 })
+    }
+
+    const uploadedFile = await uploadResponse.json()
+    const imageUrl = uploadedFile.urls?.get
+    console.log("Uploaded as JPEG, URL:", imageUrl)
+
     const prompt = `A beautifully redesigned ${roomType} in ${style} style. Professional interior design photography, high-end renovation, bright and airy, magazine quality, photorealistic.`
 
-    // Ensure image is a proper data URI
-    const imageDataUri = imageBase64.startsWith("data:")
-      ? imageBase64
-      : `data:image/jpeg;base64,${imageBase64}`
-
-    console.log("Starting prediction with data URI, length:", imageDataUri.length)
-
-    // Pass data URI directly - Replicate supports this
     const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -33,7 +57,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         version: "76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38",
         input: {
-          image: imageDataUri,
+          image: imageUrl,
           prompt: prompt,
           negative_prompt: "ugly, blurry, low quality, distorted, deformed, cartoon, sketch, watermark",
           guidance_scale: 15,
@@ -50,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     const prediction = await response.json()
-    console.log("Prediction started:", prediction.id, "status:", prediction.status)
+    console.log("Prediction started:", prediction.id)
 
     // Poll for completion
     let result = prediction
@@ -67,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (result.status === "failed") {
-      console.error("Full failed result:", JSON.stringify(result))
+      console.error("Generation failed:", result.error)
       return NextResponse.json({ error: result.error || "Generation failed" }, { status: 500 })
     }
 
