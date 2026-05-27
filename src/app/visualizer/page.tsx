@@ -74,17 +74,21 @@ export default function VisualizerPage() {
     setImageFile(file)
     setResult(null)
     setError("")
+
+    // Read as ArrayBuffer first so we can save to localStorage synchronously
     const reader = new FileReader()
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string
-      console.log("Image loaded, dataUrl length:", dataUrl?.length)
-      setImage(dataUrl)
+      console.log("Image loaded, length:", dataUrl?.length)
+      // Save immediately before any potential page reload
       try {
         localStorage.setItem("visualizer_image", dataUrl)
-        console.log("Saved to localStorage, length:", localStorage.getItem("visualizer_image")?.length)
+        localStorage.setItem("visualizer_unlocked", "true")
+        console.log("Saved to localStorage OK")
       } catch(e) {
-        console.warn("localStorage save failed:", e)
+        console.warn("localStorage failed:", e)
       }
+      setImage(dataUrl)
     }
     reader.onerror = (e) => console.error("FileReader error:", e)
     reader.readAsDataURL(file)
@@ -232,25 +236,14 @@ export default function VisualizerPage() {
           </div>
 
           {!image ? (
-            <div className="p-5 grid grid-cols-2 gap-3">
-              {/* Camera - label wraps input directly, most reliable on iOS */}
-              <label className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-caribbean-gold hover:bg-caribbean-gold/5 transition active:scale-95 cursor-pointer">
+            <div className="p-5 space-y-3">
+              {/* Single input - Android will show camera + gallery options */}
+              <label className="flex items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-caribbean-gold hover:bg-caribbean-gold/5 transition active:scale-95 cursor-pointer w-full">
                 <Camera className="h-8 w-8 text-caribbean-gold" />
-                <span className="text-sm font-semibold text-gray-700">Take Photo</span>
-                <span className="text-xs text-gray-400">Use camera</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => e.target.files?.[0] && handleImageSelect(e.target.files[0])}
-                />
-              </label>
-
-              {/* Upload - label wraps input directly */}
-              <label className="flex flex-col items-center justify-center gap-3 p-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-caribbean-gold hover:bg-caribbean-gold/5 transition active:scale-95 cursor-pointer">
-                <Upload className="h-8 w-8 text-caribbean-gold" />
-                <span className="text-sm font-semibold text-gray-700">Upload Photo</span>
-                <span className="text-xs text-gray-400">From gallery</span>
+                <div>
+                  <div className="text-sm font-semibold text-gray-700">Take or Upload a Photo</div>
+                  <div className="text-xs text-gray-400">Opens camera or gallery</div>
+                </div>
                 <input
                   type="file"
                   accept="image/*"
