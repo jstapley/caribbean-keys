@@ -42,22 +42,22 @@ export default function VisualizerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
 
-  // Persist unlocked state in sessionStorage so camera capture doesn't reset it
+  // Use localStorage for better persistence across mobile camera captures
   useEffect(() => {
-    const saved = sessionStorage.getItem("visualizer_unlocked")
-    if (saved === "true") setUnlocked(true)
+    try {
+      const saved = localStorage.getItem("visualizer_unlocked")
+      if (saved === "true") setUnlocked(true)
 
-    // Restore image if it was saved before camera remount
-    const savedImage = sessionStorage.getItem("visualizer_image")
-    if (savedImage) {
-      setImage(savedImage)
-      sessionStorage.removeItem("visualizer_image")
-    }
+      const savedImage = localStorage.getItem("visualizer_image")
+      if (savedImage) {
+        setImage(savedImage)
+      }
+    } catch(e) {}
   }, [])
 
   const handleUnlock = () => {
     setUnlocked(true)
-    sessionStorage.setItem("visualizer_unlocked", "true")
+    try { localStorage.setItem("visualizer_unlocked", "true") } catch(e) {}
   }
 
   const handlePinSubmit = (newPin: string) => {
@@ -78,12 +78,7 @@ export default function VisualizerPage() {
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string
       setImage(dataUrl)
-      // Save to sessionStorage in case mobile remounts the page after camera
-      try {
-        sessionStorage.setItem("visualizer_image", dataUrl)
-      } catch (e) {
-        // Image too large for sessionStorage, ignore
-      }
+      try { localStorage.setItem("visualizer_image", dataUrl) } catch(e) {}
     }
     reader.readAsDataURL(file)
   }
@@ -264,7 +259,7 @@ export default function VisualizerPage() {
               <div className="relative rounded-xl overflow-hidden bg-gray-100">
                 <img src={image} alt="Selected space" className="w-full h-64 object-cover" />
                 <button
-                  onClick={() => { setImage(null); setImageFile(null); setResult(null) }}
+                  onClick={() => { setImage(null); setImageFile(null); setResult(null); try { localStorage.removeItem("visualizer_image") } catch(e) {} }}
                   className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm transition"
                 >
                   ✕
