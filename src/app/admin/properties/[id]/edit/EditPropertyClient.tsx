@@ -54,6 +54,7 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
     is_featured: property.is_featured || false,
     is_cip_approved: property.is_cip_approved || false,
     video_url: property.video_url || "",
+    tiktok_url: property.tiktok_url || "",
     latitude: property.latitude?.toString() || "",
     longitude: property.longitude?.toString() || "",
     meta_title: property.meta_title || "",
@@ -108,6 +109,7 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
         is_featured: formData.is_featured,
         is_cip_approved: formData.is_cip_approved,
         video_url: formData.video_url || null,
+        tiktok_url: formData.tiktok_url || null,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         features: selectedFeatures,
@@ -391,15 +393,31 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
 
           {/* Video */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold text-caribbean-navy mb-4">Video Tour (Optional)</h2>
-            <Label htmlFor="video_url">YouTube or Vimeo URL</Label>
-            <Input
-              id="video_url"
-              type="url"
-              value={formData.video_url}
-              onChange={(e) => handleInputChange('video_url', e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=..."
-            />
+            <h2 className="text-xl font-bold text-caribbean-navy mb-4">Video Tours (Optional)</h2>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="video_url">Landscape Video URL (YouTube or Vimeo)</Label>
+                <p className="text-xs text-gray-500 mb-2">Used on the main property listing page</p>
+                <Input
+                  id="video_url"
+                  type="url"
+                  value={formData.video_url}
+                  onChange={(e) => handleInputChange('video_url', e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="tiktok_url">Portrait Video URL (TikTok or Instagram Reels)</Label>
+                <p className="text-xs text-gray-500 mb-2">Used on the mobile social landing page at /p/{formData.property_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'property-name'}</p>
+                <Input
+                  id="tiktok_url"
+                  type="url"
+                  value={formData.tiktok_url}
+                  onChange={(e) => handleInputChange('tiktok_url', e.target.value)}
+                  placeholder="https://www.tiktok.com/@antigua.dreams/video/..."
+                />
+              </div>
+            </div>
           </div>
 
           {/* Location (Interactive Map) */}
