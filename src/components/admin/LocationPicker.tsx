@@ -157,7 +157,8 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
       {/* Search Box */}
       <div>
         <Label>Search Location or Click on Map</Label>
-        <div className="flex gap-2 mt-2">
+        <p className="text-xs text-gray-500 mb-2">Tip: Use format like "Jolly Harbour, Antigua" or click directly on the map</p>
+        <div className="flex gap-2 mt-1">
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
