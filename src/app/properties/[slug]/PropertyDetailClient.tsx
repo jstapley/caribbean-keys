@@ -56,6 +56,7 @@ interface PropertyDetailClientProps {
 export function PropertyDetailClient({ property, similarProperties }: PropertyDetailClientProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showLightbox, setShowLightbox] = useState(false)
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null)
   
   // Inquiry form state
   const [inquiryLoading, setInquiryLoading] = useState(false)
@@ -80,10 +81,12 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
     : ['/images/properties/garden1.jpg', '/images/properties/garden2.jpg', '/images/properties/garden3.jpg']
 
   const nextImage = () => {
+    setImageDimensions(null)
     setCurrentImageIndex((prev) => (prev + 1) % images.length)
   }
 
   const prevImage = () => {
+    setImageDimensions(null)
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
   }
 
@@ -273,13 +276,25 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
               
               {/* Main Carousel */}
               <div className="relative">
-                <div className="relative h-[400px] rounded-lg overflow-hidden bg-gray-100">
+                <div 
+                  className="relative rounded-lg overflow-hidden bg-gray-100 transition-all duration-500"
+                  style={{
+                    // Adaptive height based on image aspect ratio, capped between 300px and 600px
+                    height: imageDimensions
+                      ? `${Math.min(600, Math.max(300, Math.round(imageDimensions.height / imageDimensions.width * Math.min(800, typeof window !== 'undefined' ? window.innerWidth * 0.6 : 600))))  }px`
+                      : '400px'
+                  }}
+                >
                   <Image
                     src={images[currentImageIndex]}
                     alt={`${property.property_name} - Image ${currentImageIndex + 1}`}
                     fill
-                    className="object-cover cursor-pointer"
+                    className="object-contain cursor-pointer"
                     onClick={() => setShowLightbox(true)}
+                    onLoad={(e) => {
+                      const img = e.target as HTMLImageElement
+                      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight })
+                    }}
                   />
                   
                   {/* Navigation Arrows */}
