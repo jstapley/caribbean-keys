@@ -468,6 +468,49 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold text-caribbean-navy mb-4">Status & Settings</h2>
             <div className="space-y-4">
+
+              {/* Sharing Links */}
+              <div className="bg-caribbean-seafoam/20 rounded-lg p-4 space-y-3">
+                <h3 className="text-sm font-bold text-caribbean-navy">📤 Sharing Links</h3>
+                
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Property Listing URL</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-white px-3 py-2 rounded border border-gray-200 text-gray-700 truncate">
+                      caribbean-keys.vercel.app/properties/{property.slug}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://caribbean-keys.vercel.app/properties/${property.slug}`)
+                        alert('Copied!')
+                      }}
+                      className="text-xs bg-caribbean-navy text-white px-3 py-2 rounded hover:bg-caribbean-navy/90 transition whitespace-nowrap"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">📱 TikTok / Social Landing Page</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-white px-3 py-2 rounded border border-gray-200 text-gray-700 truncate">
+                      caribbean-keys.vercel.app/p/{property.slug}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://caribbean-keys.vercel.app/p/${property.slug}`)
+                        alert('Copied!')
+                      }}
+                      className="text-xs bg-caribbean-gold text-caribbean-navy px-3 py-2 rounded hover:bg-caribbean-gold/90 transition whitespace-nowrap font-semibold"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div>
                 <Label htmlFor="listing_status">Listing Status</Label>
                 <Select
