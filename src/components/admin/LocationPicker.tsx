@@ -2,10 +2,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { MapPin, Search } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 
 interface LocationPickerProps {
   onLocationChange: (lat: number | null, lng: number | null, address?: string) => void
@@ -18,7 +16,8 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const markerRef = useRef<google.maps.Marker | null>(null)
-  const [searchQuery, setSearchQuery] = useState(initialAddress || '')
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const [searchError, setSearchError] = useState('')
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
     initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
@@ -26,9 +25,8 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
 
   useEffect(() => {
     const initMap = () => {
-      if (!window.google || !mapRef.current) return
+      if (!window.google || !mapRef.current || !inputRef.current) return
 
-      // Default center to Antigua
       const antiguaCenter = { lat: 17.0608, lng: -61.7964 }
       const center = selectedLocation || antiguaCenter
 
@@ -47,7 +45,36 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
         addMarker(selectedLocation)
       }
 
-      // Click to add marker
+      // Setup Places Autocomplete on the input
+      const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
+        componentRestrictions: { country: 'ag' }, // Restrict to Antigua & Barbuda
+        fields: ['geometry', 'formatted_address', 'name'],
+      })
+
+      autocompleteRef.current = autocomplete
+
+      // When user selects a suggestion
+      autocomplete.addListener('place_changed', () => {
+        setSearchError('')
+        const place = autocomplete.getPlace()
+
+        if (!place.geometry?.location) {
+          setSearchError('Location not found. Please select from the dropdown.')
+          return
+        }
+
+        const lat = place.geometry.location.lat()
+        const lng = place.geometry.location.lng()
+        const address = place.formatted_address || place.name || ''
+
+        setSelectedLocation({ lat, lng })
+        map.setCenter({ lat, lng })
+        map.setZoom(16)
+        addMarker({ lat, lng })
+        onLocationChange(lat, lng, address)
+      })
+
+      // Click map to place marker
       map.addListener('click', (e: google.maps.MapMouseEvent) => {
         if (e.latLng) {
           const lat = e.latLng.lat()
@@ -55,16 +82,14 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
           setSelectedLocation({ lat, lng })
           addMarker({ lat, lng })
           onLocationChange(lat, lng)
-          
-          // Reverse geocode to get address
+          // Reverse geocode to fill in address
           reverseGeocode(lat, lng)
         }
       })
     }
 
-    // Wait for Google Maps to load
     const checkGoogleMaps = setInterval(() => {
-      if (window.google) {
+      if (window.google?.maps?.places) {
         clearInterval(checkGoogleMaps)
         initMap()
       }
@@ -75,13 +100,8 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
 
   const addMarker = (location: { lat: number; lng: number }) => {
     if (!mapInstanceRef.current) return
+    if (markerRef.current) markerRef.current.setMap(null)
 
-    // Remove existing marker
-    if (markerRef.current) {
-      markerRef.current.setMap(null)
-    }
-
-    // Add new marker
     const marker = new google.maps.Marker({
       position: location,
       map: mapInstanceRef.current,
@@ -91,7 +111,6 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
 
     markerRef.current = marker
 
-    // Update location when marker is dragged
     marker.addListener('dragend', () => {
       const position = marker.getPosition()
       if (position) {
@@ -108,48 +127,18 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
     try {
       const response = await fetch(`/api/geocode?address=${lat},${lng}`)
       const data = await response.json()
-      if (data.formatted_address) {
-        setSearchQuery(data.formatted_address)
+      if (data.formatted_address && inputRef.current) {
+        inputRef.current.value = data.formatted_address
       }
-    } catch (e) {
-      // Silent fail on reverse geocode
-    }
-  }
-
-  const handleSearch = async () => {
-    if (!mapInstanceRef.current || !searchQuery) return
-    setSearchError('')
-
-    try {
-      const response = await fetch(`/api/geocode?address=${encodeURIComponent(searchQuery)}`)
-      const data = await response.json()
-
-      if (!response.ok || data.error) {
-        setSearchError('Location not found. Try "Jolly Harbour, Antigua" or click the map.')
-        return
-      }
-
-      const { lat, lng, formatted_address } = data
-      setSelectedLocation({ lat, lng })
-      mapInstanceRef.current?.setCenter({ lat, lng })
-      mapInstanceRef.current?.setZoom(15)
-      addMarker({ lat, lng })
-      setSearchQuery(formatted_address)
-      onLocationChange(lat, lng, formatted_address)
-    } catch (e) {
-      setSearchError('Search failed. Please click directly on the map instead.')
-    }
+    } catch (e) {}
   }
 
   const handleClear = () => {
-    setSearchQuery('')
+    if (inputRef.current) inputRef.current.value = ''
     setSelectedLocation(null)
-    if (markerRef.current) {
-      markerRef.current.setMap(null)
-    }
+    setSearchError('')
+    if (markerRef.current) markerRef.current.setMap(null)
     onLocationChange(null, null)
-    
-    // Reset map to Antigua center
     if (mapInstanceRef.current) {
       mapInstanceRef.current.setCenter({ lat: 17.0608, lng: -61.7964 })
       mapInstanceRef.current.setZoom(11)
@@ -158,30 +147,30 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
 
   return (
     <div className="space-y-4">
-      {/* Search Box */}
+      {/* Autocomplete Search */}
       <div>
         <Label>Search Location or Click on Map</Label>
-        <p className="text-xs text-gray-500 mb-2">Tip: Use format like "Jolly Harbour, Antigua" or click directly on the map</p>
-        <div className="flex gap-2 mt-1">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+        <p className="text-xs text-gray-500 mt-1 mb-2">Start typing an address and select from the dropdown</p>
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            defaultValue={initialAddress || ''}
             placeholder="Search address in Antigua..."
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-caribbean-gold focus:border-transparent"
           />
-          <Button type="button" onClick={handleSearch} className="bg-caribbean-gold hover:bg-caribbean-gold/90 text-caribbean-navy">
-            <Search className="h-4 w-4" />
-          </Button>
           {selectedLocation && (
-            <Button type="button" variant="outline" onClick={handleClear}>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition"
+            >
               Clear
-            </Button>
+            </button>
           )}
         </div>
         {searchError && (
-          <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-            ⚠️ {searchError}
-          </p>
+          <p className="text-sm text-red-600 mt-2">⚠️ {searchError}</p>
         )}
       </div>
 
@@ -191,12 +180,12 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
         {!selectedLocation && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white px-4 py-2 rounded-lg shadow-md text-sm text-gray-600 flex items-center gap-2">
             <MapPin className="h-4 w-4 text-caribbean-gold" />
-            Click on the map to drop a pin
+            Search above or click the map to drop a pin
           </div>
         )}
       </div>
 
-      {/* Selected Coordinates Display */}
+      {/* Coordinates */}
       {selectedLocation && (
         <div className="bg-caribbean-seafoam/20 p-4 rounded-lg">
           <div className="flex items-center gap-2 text-sm">
@@ -206,9 +195,7 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
               {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
             </span>
           </div>
-          <p className="text-xs text-gray-600 mt-1">
-            You can drag the marker to adjust the location
-          </p>
+          <p className="text-xs text-gray-600 mt-1">Drag the marker to fine-tune the location</p>
         </div>
       )}
     </div>
