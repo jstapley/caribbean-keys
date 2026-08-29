@@ -157,9 +157,9 @@ export default function HomePage() {
                 const firstImage = property.images && property.images.length > 0 ? property.images[0] : '/images/placeholder-property.jpg'
                 
                 return (
+                  <Link key={property.id} href={`/properties/${property.slug}`} className="block">
                   <div 
-                    key={property.id} 
-                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group"
+                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer"
                   >
                     {/* Property Image */}
                     <div className="relative h-64 overflow-hidden">
@@ -169,19 +169,27 @@ export default function HomePage() {
                         fill
                         className="object-cover group-hover:scale-110 transition-transform duration-300"
                       />
-                      {/* Featured Badge */}
-                      <div className="absolute top-4 right-4">
-                        <span className="bg-caribbean-gold text-caribbean-navy px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
-                          Featured
-                        </span>
-                      </div>
-                      {/* Parish Badge */}
+                      {/* Parish Badge - Top Left */}
                       <div className="absolute top-4 left-4">
                         <span className="bg-white/90 backdrop-blur-sm text-caribbean-navy px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
                           {property.parish}
                         </span>
                       </div>
+                      {/* Featured Badge - Top Right */}
+                      <div className="absolute top-4 right-4">
+                        <span className="bg-caribbean-gold text-caribbean-navy px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                          Featured
+                        </span>
+                      </div>
+                      {/* CIP Approved Badge - Bottom Left */}
+                      {property.is_cip_approved && (
+                        <div className="absolute bottom-4 left-4">
+                          <span className="bg-caribbean-navy text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1">
+                            🛡️ CIP Approved
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Property Details */}
@@ -217,12 +225,13 @@ export default function HomePage() {
                         <div className="text-2xl font-bold text-caribbean-navy">
                           {property.price_asking ? formatPrice(property.price_asking) : 'Contact for Price'}
                         </div>
-                        <Button variant="outline" size="sm" asChild className="border-caribbean-gold text-caribbean-gold hover:bg-caribbean-gold hover:text-white font-semibold">
-                          <Link href={`/properties/${property.slug}`}>View Details</Link>
-                        </Button>
+                        <span className="text-sm font-semibold text-caribbean-gold border border-caribbean-gold px-3 py-1.5 rounded-md group-hover:bg-caribbean-gold group-hover:text-white transition">
+                          View Details
+                        </span>
                       </div>
                     </div>
                   </div>
+                  </Link>
                 )
               })
             ) : (
