@@ -250,6 +250,16 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
                   variant="outline"
                   size="sm"
                   className="border-caribbean-gold text-caribbean-gold hover:bg-caribbean-gold hover:text-white"
+                  onClick={() => {
+                    const url = window.location.href
+                    const title = property.property_name
+                    if (navigator.share) {
+                      navigator.share({ title, url })
+                    } else {
+                      navigator.clipboard.writeText(url)
+                      alert("Link copied to clipboard!")
+                    }
+                  }}
                 >
                   <Share2 className="h-4 w-4 mr-2" />
                   Share Property

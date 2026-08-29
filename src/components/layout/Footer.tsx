@@ -129,13 +129,6 @@ export function Footer() {
           <div>
             <h3 className="text-white text-lg font-bold mb-4">Contact Us</h3>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-2">
-                <MapPin className="h-5 w-5 mt-0.5 flex-shrink-0" />
-                <span>
-                  Address Line<br />
-                  St. John's, Antigua
-                </span>
-              </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-5 w-5 flex-shrink-0" />
                 <a href="tel:+17057255824" className="hover:text-white transition">
@@ -144,8 +137,8 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-5 w-5 flex-shrink-0" />
-                <a href="mailto:ross.caribbeankeys@gmail.com" className="hover:text-white transition">
-                  ross.caribbeankeys@gmail.com
+                <a href="mailto:info@caribbeankeysrealestate.com" className="hover:text-white transition">
+                  info@caribbeankeysrealestate.com
                 </a>
               </li>
             </ul>

@@ -21,13 +21,13 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property }: PropertyCardProps) {
-  // Get first image or use placeholder
   const imageUrl = property.images && Array.isArray(property.images) && property.images.length > 0
     ? property.images[0]
     : "/images/placeholder-property.jpg"
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group">
+    <Link href={`/properties/${property.slug}`} className="block">
+      <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 group cursor-pointer">
       {/* Property Image */}
       <div className="relative h-64 overflow-hidden">
         <Image
@@ -103,16 +103,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
           <div className="text-2xl font-bold text-caribbean-navy">
             {formatPrice(property.price_asking)}
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            asChild 
-            className="border-caribbean-gold text-caribbean-gold hover:bg-caribbean-gold hover:text-white font-semibold"
-          >
-            <Link href={`/properties/${property.slug}`}>View Details</Link>
-          </Button>
+          <span className="text-sm font-semibold text-caribbean-gold border border-caribbean-gold px-3 py-1.5 rounded-md group-hover:bg-caribbean-gold group-hover:text-white transition">
+            View Details
+          </span>
         </div>
       </div>
     </div>
+    </Link>
   )
 }

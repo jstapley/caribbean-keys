@@ -59,6 +59,7 @@ export const PROPERTY_FEATURES = [
   'Office/Study',
   'Gym',
   'Tennis Court',
+  'Golf Course',
   'Boat Dock',
 ] as const
 
