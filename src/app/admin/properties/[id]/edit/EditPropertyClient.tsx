@@ -465,25 +465,16 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
                 </label>
               </div>
 
-              <div>
-                <Label htmlFor="meta_title">SEO Title (Optional)</Label>
-                <Input
-                  id="meta_title"
-                  value={formData.meta_title}
-                  onChange={(e) => handleInputChange('meta_title', e.target.value)}
-                  placeholder="Leave blank to use property name"
+              <div className="flex items-center">
+                <Checkbox
+                  id="is_cip_approved"
+                  checked={formData.is_cip_approved}
+                  onCheckedChange={(checked) => handleInputChange('is_cip_approved', checked)}
+                  className="border-caribbean-navy data-[state=checked]:bg-caribbean-gold data-[state=checked]:border-caribbean-gold"
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="meta_description">SEO Description (Optional)</Label>
-                <Textarea
-                  id="meta_description"
-                  value={formData.meta_description}
-                  onChange={(e) => handleInputChange('meta_description', e.target.value)}
-                  placeholder="Leave blank to use property description"
-                  rows={3}
-                />
+                <label htmlFor="is_cip_approved" className="ml-2 text-sm font-semibold cursor-pointer">
+                  CIP Approved
+                </label>
               </div>
             </div>
           </div>

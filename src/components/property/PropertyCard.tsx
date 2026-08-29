@@ -16,6 +16,7 @@ interface PropertyCardProps {
     price_asking: number | null
     images: any
     is_featured: boolean
+    is_cip_approved: boolean
     listing_status: string
   }
 }
@@ -42,6 +43,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
           {property.is_featured && (
             <span className="bg-caribbean-gold text-caribbean-navy px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
               Featured
+            </span>
+          )}
+          {property.is_cip_approved && (
+            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+              CIP Approved
             </span>
           )}
           {property.listing_status === 'new' && (

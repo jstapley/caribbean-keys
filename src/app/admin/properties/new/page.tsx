@@ -35,9 +35,8 @@ export default function NewPropertyPage() {
     longitude: null as number | null,
     listing_status: 'active',
     is_featured: false,
+    is_cip_approved: false,
     features: [] as string[],
-    meta_title: '',
-    meta_description: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,11 +65,10 @@ export default function NewPropertyPage() {
         longitude: formData.longitude,
         listing_status: formData.listing_status,
         is_featured: formData.is_featured,
+        is_cip_approved: formData.is_cip_approved,
         features: formData.features,
         images: images,
         slug: slug,
-        meta_title: formData.meta_title || formData.property_name,
-        meta_description: formData.meta_description || formData.property_description?.substring(0, 160),
       }
 
       // Insert into Supabase
@@ -220,6 +218,17 @@ export default function NewPropertyPage() {
                 />
                 <Label htmlFor="is_featured" className="cursor-pointer">
                   Featured Property
+                </Label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="is_cip_approved"
+                  checked={formData.is_cip_approved}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_cip_approved: checked as boolean })}
+                />
+                <Label htmlFor="is_cip_approved" className="cursor-pointer">
+                  CIP Approved
                 </Label>
               </div>
             </div>
