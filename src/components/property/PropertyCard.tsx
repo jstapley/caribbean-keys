@@ -38,16 +38,19 @@ export function PropertyCard({ property }: PropertyCardProps) {
           className="object-cover group-hover:scale-110 transition-transform duration-300"
         />
         
-        {/* Status Badges */}
+      {/* Parish Badge - Top Left */}
+        <div className="absolute top-4 left-4">
+          <span className="bg-white/90 backdrop-blur-sm text-caribbean-navy px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            {property.parish}
+          </span>
+        </div>
+
+        {/* Featured / Status Badges - Top Right */}
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           {property.is_featured && (
             <span className="bg-caribbean-gold text-caribbean-navy px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
               Featured
-            </span>
-          )}
-          {property.is_cip_approved && (
-            <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
-              CIP Approved
             </span>
           )}
           {property.listing_status === 'new' && (
@@ -67,13 +70,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
           )}
         </div>
 
-        {/* Parish Badge */}
-        <div className="absolute top-4 left-4">
-          <span className="bg-white/90 backdrop-blur-sm text-caribbean-navy px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {property.parish}
-          </span>
-        </div>
+        {/* CIP Approved Badge - Bottom Left */}
+        {property.is_cip_approved && (
+          <div className="absolute bottom-4 left-4">
+            <span className="bg-caribbean-navy text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1">
+              🛡️ CIP Approved
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Property Details */}
