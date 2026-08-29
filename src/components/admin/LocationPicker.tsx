@@ -104,37 +104,41 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
     })
   }
 
-  const reverseGeocode = (lat: number, lng: number) => {
-    if (!window.google) return
-
-    const geocoder = new google.maps.Geocoder()
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results && results[0]) {
-        setSearchQuery(results[0].formatted_address)
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(`/api/geocode?address=${lat},${lng}`)
+      const data = await response.json()
+      if (data.formatted_address) {
+        setSearchQuery(data.formatted_address)
       }
-    })
+    } catch (e) {
+      // Silent fail on reverse geocode
+    }
   }
 
-  const handleSearch = () => {
-    if (!window.google || !mapInstanceRef.current || !searchQuery) return
+  const handleSearch = async () => {
+    if (!mapInstanceRef.current || !searchQuery) return
+    setSearchError('')
 
-    const geocoder = new google.maps.Geocoder()
-    geocoder.geocode({ address: `${searchQuery}, Antigua` }, (results, status) => {
-      if (status === 'OK' && results && results[0]) {
-        setSearchError('')
-        const location = results[0].geometry.location
-        const lat = location.lat()
-        const lng = location.lng()
+    try {
+      const response = await fetch(`/api/geocode?address=${encodeURIComponent(searchQuery)}`)
+      const data = await response.json()
 
-        setSelectedLocation({ lat, lng })
-        mapInstanceRef.current?.setCenter(location)
-        mapInstanceRef.current?.setZoom(15)
-        addMarker({ lat, lng })
-        onLocationChange(lat, lng, results[0].formatted_address)
-      } else {
-        setSearchError('Location not found. Please try a different address.')
+      if (!response.ok || data.error) {
+        setSearchError('Location not found. Try "Jolly Harbour, Antigua" or click the map.')
+        return
       }
-    })
+
+      const { lat, lng, formatted_address } = data
+      setSelectedLocation({ lat, lng })
+      mapInstanceRef.current?.setCenter({ lat, lng })
+      mapInstanceRef.current?.setZoom(15)
+      addMarker({ lat, lng })
+      setSearchQuery(formatted_address)
+      onLocationChange(lat, lng, formatted_address)
+    } catch (e) {
+      setSearchError('Search failed. Please click directly on the map instead.')
+    }
   }
 
   const handleClear = () => {
