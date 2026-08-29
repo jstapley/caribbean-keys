@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import { useEffect, useRef, useState } from 'react'
@@ -19,6 +18,7 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const markerRef = useRef<google.maps.Marker | null>(null)
   const [searchQuery, setSearchQuery] = useState(initialAddress || '')
+  const [searchError, setSearchError] = useState('')
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(
     initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
   )
@@ -120,6 +120,7 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
     const geocoder = new google.maps.Geocoder()
     geocoder.geocode({ address: `${searchQuery}, Antigua` }, (results, status) => {
       if (status === 'OK' && results && results[0]) {
+        setSearchError('')
         const location = results[0].geometry.location
         const lat = location.lat()
         const lng = location.lng()
@@ -130,7 +131,7 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
         addMarker({ lat, lng })
         onLocationChange(lat, lng, results[0].formatted_address)
       } else {
-        alert('Location not found. Please try a different address.')
+        setSearchError('Location not found. Please try a different address.')
       }
     })
   }
@@ -171,6 +172,11 @@ export function LocationPicker({ onLocationChange, initialLat, initialLng, initi
             </Button>
           )}
         </div>
+        {searchError && (
+          <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
+            ⚠️ {searchError}
+          </p>
+        )}
       </div>
 
       {/* Map */}
