@@ -53,6 +53,11 @@ export default async function SocialLandingPage({ params }: { params: { slug: st
 
   return (
     <div className="min-h-screen bg-caribbean-navy flex flex-col items-center">
+      {/* Hide header and footer inherited from root layout */}
+      <style>{`
+        header, footer, nav { display: none !important; }
+        main { padding: 0 !important; }
+      `}</style>
       {/* Logo Header */}
       <div className="w-full max-w-md px-4 pt-6 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
