@@ -25,6 +25,7 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
   
   // Parse existing features
@@ -51,6 +52,7 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
     property_description: property.property_description || "",
     listing_status: property.listing_status || "active",
     is_featured: property.is_featured || false,
+    is_cip_approved: property.is_cip_approved || false,
     video_url: property.video_url || "",
     latitude: property.latitude?.toString() || "",
     longitude: property.longitude?.toString() || "",
@@ -104,14 +106,13 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
         property_description: formData.property_description || null,
         listing_status: formData.listing_status,
         is_featured: formData.is_featured,
+        is_cip_approved: formData.is_cip_approved,
         video_url: formData.video_url || null,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         features: selectedFeatures,
         images: images,
         slug: slug,
-        meta_title: formData.meta_title || formData.property_name,
-        meta_description: formData.meta_description || formData.property_description?.substring(0, 160),
         updated_at: new Date().toISOString(),
       }
 
@@ -123,10 +124,12 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
 
       if (updateError) throw updateError
 
-      // Success! Show confirmation and redirect
-      alert(`✅ Success!\n\n"${formData.property_name}" has been updated successfully.\n\nYou'll be redirected to the properties list.`)
-      router.push('/admin/properties')
-      router.refresh()
+      // Success! Show inline message then redirect
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/admin/properties')
+        router.refresh()
+      }, 2000)
     } catch (error: any) {
       console.error('Error updating property:', error)
       
@@ -203,6 +206,18 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
             </Button>
           </div>
         </div>
+
+        {success && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg flex items-center gap-3">
+            <svg className="h-5 w-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="font-semibold">"{formData.property_name}" saved successfully!</p>
+              <p className="text-sm text-green-600">Redirecting to properties list...</p>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
