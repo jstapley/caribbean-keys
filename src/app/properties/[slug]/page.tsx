@@ -1,74 +1,84 @@
 // @ts-nocheck
-"use client"
-
-import { useEffect, useState } from "react"
-import { useParams, notFound } from "next/navigation"
-import { supabase } from "@/lib/supabase/client"
+import { notFound } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import { PropertyDetailClient } from "./PropertyDetailClient"
+import { getPropertySchema, BASE_URL } from "@/lib/seo-config"
+import { formatPrice } from "@/lib/utils"
 
-export default function PropertyDetailPage() {
-  const params = useParams()
-  const [property, setProperty] = useState<any>(null)
-  const [similarProperties, setSimilarProperties] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    async function fetchProperty() {
-      try {
-        // Fetch property by slug
-        const { data: propertyData, error: propertyError } = await supabase
-          .from('properties')
-          .select('*')
-          .eq('slug', params.slug)
-          .single()
-
-        if (propertyError || !propertyData) {
-          setError(true)
-          setLoading(false)
-          return
-        }
-
-        setProperty(propertyData)
-
-        // Fetch similar properties
-        const { data: similarData } = await supabase
-          .from('properties')
-          .select('*')
-          .neq('id', propertyData.id)
-          .or(`parish.eq.${propertyData.parish},property_type.eq.${propertyData.property_type}`)
-          .in('listing_status', ['active', 'new'])
-          .limit(3)
-
-        setSimilarProperties(similarData || [])
-      } catch (err) {
-        console.error('Error fetching property:', err)
-        setError(true)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (params.slug) {
-      fetchProperty()
-    }
-  }, [params.slug])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-caribbean-gold mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading property...</p>
-        </div>
-      </div>
-    )
+interface PropertyDetailPageProps {
+  params: {
+    slug: string
   }
+}
+
+export async function generateMetadata({ params }: PropertyDetailPageProps) {
+  const { slug } = await params
+  const supabase = createClient()
+  const { data: property } = await supabase
+    .from('properties')
+    .select('*')
+    .eq('slug', slug)
+    .single()
+
+  if (!property) return {}
+
+  const title = `${property.property_name} | ${property.parish}, Antigua`
+  const description = property.property_description?.substring(0, 160) || 
+    `${property.bedrooms} bed, ${property.bathrooms} bath property in ${property.parish}, Antigua. Listed at ${formatPrice(property.price_asking)}.`
+  const image = property.images?.[0] || `${BASE_URL}/images/og-default.jpg`
+  const url = `${BASE_URL}/properties/${property.slug}`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      images: [{ url: image, width: 1200, height: 630, alt: property.property_name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
+    alternates: { canonical: url },
+  }
+}
+
+export default async function PropertyDetailPage({ params }: PropertyDetailPageProps) {
+  const { slug } = await params
+  const supabase = createClient()
+
+  const { data: property, error } = await supabase
+    .from('properties')
+    .select('*')
+    .eq('slug', slug)
+    .single()
 
   if (error || !property) {
-    return notFound()
+    notFound()
   }
 
-  return <PropertyDetailClient property={property} similarProperties={similarProperties} />
+  const { data: similarProperties } = await supabase
+    .from('properties')
+    .select('*')
+    .neq('id', property.id)
+    .or(`parish.eq.${property.parish},property_type.eq.${property.property_type}`)
+    .in('listing_status', ['active', 'new'])
+    .limit(3)
+
+  const propertySchema = getPropertySchema(property)
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(propertySchema) }}
+      />
+      <PropertyDetailClient property={property} similarProperties={similarProperties || []} />
+    </>
+  )
 }
-// test

@@ -1,7 +1,20 @@
+// @ts-nocheck
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { MapPin, TrendingUp, Award, Users, CheckCircle } from "lucide-react"
+import { PERSON_SCHEMA, BASE_URL } from "@/lib/seo-config"
+
+export const metadata = {
+  title: 'About Ross Harris | Caribbean Keys Real Estate',
+  description: 'Meet Ross Harris, your trusted real estate agent in Antigua. With 15+ years of experience and a passion for Caribbean living, Ross helps clients find their perfect property.',
+  openGraph: {
+    title: 'About Ross Harris | Caribbean Keys Real Estate',
+    description: 'Meet Ross Harris, your trusted real estate agent in Antigua.',
+    url: `${BASE_URL}/about`,
+  },
+  alternates: { canonical: `${BASE_URL}/about` },
+}
 
 export default function AboutPage() {
   const values = [
@@ -32,6 +45,11 @@ export default function AboutPage() {
   ]
 
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(PERSON_SCHEMA) }}
+      />
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="relative h-[400px] bg-gradient-to-r from-caribbean-navy to-caribbean-blue">
@@ -55,7 +73,7 @@ export default function AboutPage() {
             {/* Image */}
             <div className="relative h-[700px] rounded-lg overflow-hidden shadow-xl">
               <Image
-                src="/images/ross.png"
+                src="/images/ross.jpg"
                 alt="Ross - Caribbean Keys Real Estate Agent in Antigua"
                 fill
                 className="object-cover"
@@ -163,5 +181,6 @@ export default function AboutPage() {
         </div>
       </section>
     </div>
+    </>
   )
 }
