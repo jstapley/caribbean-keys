@@ -6,6 +6,9 @@ import { Footer } from "@/components/layout/Footer";
 import { GoogleMapsScript } from "@/components/GoogleMapsScript";
 import { ACTIVE_FONT, montserrat, poppins, workSans, inter, playfair } from "@/lib/fonts/font-config";
 import { LOCAL_BUSINESS_SCHEMA, BASE_URL } from "@/lib/seo-config";
+import Script from "next/script";
+
+const GA_MEASUREMENT_ID = "G-YRCEVF9JJX"
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -64,6 +67,21 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Google Analytics GA4 */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
         {/* Local Business Schema */}
         <script
           type="application/ld+json"
