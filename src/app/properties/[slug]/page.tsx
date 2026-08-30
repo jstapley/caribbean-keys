@@ -2,55 +2,82 @@
 import { notFound } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { PropertyDetailClient } from "./PropertyDetailClient"
-import { getPropertySchema, BASE_URL } from "@/lib/seo-config"
 import { formatPrice } from "@/lib/utils"
 
-interface PropertyDetailPageProps {
-  params: {
-    slug: string
-  }
-}
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://caribbean-keys.vercel.app'
 
-export async function generateMetadata({ params }: PropertyDetailPageProps) {
-  const { slug } = await params
-  const supabase = createClient()
-  const { data: property } = await supabase
-    .from('properties')
-    .select('*')
-    .eq('slug', slug)
-    .single()
-
-  if (!property) return {}
-
-  const title = `${property.property_name} | ${property.parish}, Antigua`
-  const description = property.property_description?.substring(0, 160) || 
-    `${property.bedrooms} bed, ${property.bathrooms} bath property in ${property.parish}, Antigua. Listed at ${formatPrice(property.price_asking)}.`
-  const image = property.images?.[0] || `${BASE_URL}/images/og-default.jpg`
-  const url = `${BASE_URL}/properties/${property.slug}`
-
+function getPropertySchema(property: any) {
   return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url,
-      type: 'website',
-      images: [{ url: image, width: 1200, height: 630, alt: property.property_name }],
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: property.property_name,
+    description: property.property_description,
+    url: `${BASE_URL}/properties/${property.slug}`,
+    image: property.images?.[0] || `${BASE_URL}/images/og-default.jpg`,
+    offers: {
+      '@type': 'Offer',
+      price: property.price_asking,
+      priceCurrency: 'USD',
+      availability: property.listing_status === 'sold'
+        ? 'https://schema.org/SoldOut'
+        : 'https://schema.org/InStock',
     },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [image],
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: property.property_address || property.parish,
+      addressLocality: property.parish,
+      addressRegion: 'Antigua',
+      addressCountry: 'AG',
     },
-    alternates: { canonical: url },
+    numberOfRooms: property.bedrooms,
+    numberOfBathroomsTotal: property.bathrooms,
   }
 }
 
-export default async function PropertyDetailPage({ params }: PropertyDetailPageProps) {
+export async function generateMetadata({ params }: any) {
+  try {
+    const { slug } = await params
+    const supabase = await createClient()
+    const { data: property } = await supabase
+      .from('properties')
+      .select('property_name, parish, property_description, bedrooms, bathrooms, price_asking, images, slug')
+      .eq('slug', slug)
+      .single()
+
+    if (!property) return {}
+
+    const title = `${property.property_name} | ${property.parish}, Antigua`
+    const description = property.property_description?.substring(0, 160) ||
+      `${property.bedrooms} bed, ${property.bathrooms} bath property in ${property.parish}, Antigua.`
+    const image = property.images?.[0] || `${BASE_URL}/images/og-default.jpg`
+    const url = `${BASE_URL}/properties/${property.slug}`
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        url,
+        type: 'website',
+        images: [{ url: image, width: 1200, height: 630, alt: property.property_name }],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [image],
+      },
+      alternates: { canonical: url },
+    }
+  } catch {
+    return {}
+  }
+}
+
+export default async function PropertyDetailPage({ params }: any) {
   const { slug } = await params
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: property, error } = await supabase
     .from('properties')
