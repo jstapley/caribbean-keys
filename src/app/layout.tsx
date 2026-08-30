@@ -6,7 +6,8 @@ import { Footer } from "@/components/layout/Footer";
 import { GoogleMapsScript } from "@/components/GoogleMapsScript";
 import { ACTIVE_FONT, montserrat, poppins, workSans, inter, playfair } from "@/lib/fonts/font-config";
 import { LOCAL_BUSINESS_SCHEMA, BASE_URL } from "@/lib/seo-config";
-import Script from "next/script";
+import Script from "next/script"
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 const GA_MEASUREMENT_ID = "G-YRCEVF9JJX"
 
@@ -105,6 +106,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </div>
+        <WhatsAppButton />
       </body>
     </html>
   );

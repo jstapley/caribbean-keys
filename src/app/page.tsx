@@ -97,35 +97,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Quick Stats */}
-      <section className="bg-white py-12 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="flex flex-col items-center">
-              <div className="bg-caribbean-blue/20 p-4 rounded-full mb-4">
-                <Home className="h-8 w-8 text-caribbean-navy" />
-              </div>
-              <div className="text-3xl font-bold text-caribbean-navy mb-2">150+</div>
-              <div className="text-gray-600">Properties Listed</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="bg-caribbean-blue/20 p-4 rounded-full mb-4">
-                <TrendingUp className="h-8 w-8 text-caribbean-navy" />
-              </div>
-              <div className="text-3xl font-bold text-caribbean-navy mb-2">50+</div>
-              <div className="text-gray-600">Properties Sold</div>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="bg-caribbean-blue/20 p-4 rounded-full mb-4">
-                <MapPin className="h-8 w-8 text-caribbean-navy" />
-              </div>
-              <div className="text-3xl font-bold text-caribbean-navy mb-2">6</div>
-              <div className="text-gray-600">Parishes Covered</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Featured Properties */}
       <section className="py-16 bg-caribbean-seafoam">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

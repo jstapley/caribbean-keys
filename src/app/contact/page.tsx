@@ -157,7 +157,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-caribbean-navy mb-1">Location</h3>
                     <p className="text-gray-700">
-                      St. John's, Antigua and Barbuda
+                      Jolly Harbour, St. Mary, Antigua
                     </p>
                   </div>
                 </div>
