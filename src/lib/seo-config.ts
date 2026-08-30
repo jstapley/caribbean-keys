@@ -37,6 +37,8 @@ export const LOCAL_BUSINESS_SCHEMA = {
   url: BASE_URL,
   telephone: '+17057255824',
   email: 'ross.caribbeankeys@gmail.com',
+  priceRange: '$$$',
+  image: `${BASE_URL}/images/logo.png`,
   address: {
     '@type': 'PostalAddress',
     streetAddress: 'Jolly Harbour',
@@ -60,6 +62,7 @@ export const LOCAL_BUSINESS_SCHEMA = {
     'https://www.instagram.com/caribbean_keys/',
     'https://www.tiktok.com/@antigua.dreams',
     'https://www.youtube.com/@Caribbeankeysofficial',
+    'https://g.page/r/Ca7u9-BL3IHjEBM/review',
   ],
   founder: {
     '@type': 'Person',
