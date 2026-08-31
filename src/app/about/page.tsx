@@ -73,7 +73,7 @@ export default function AboutPage() {
             {/* Image */}
             <div className="relative h-[700px] rounded-lg overflow-hidden shadow-xl">
               <Image
-                src="/images/ross.jpg"
+                src="/public/images/ross.png"
                 alt="Ross - Caribbean Keys Real Estate Agent in Antigua"
                 fill
                 className="object-cover"
