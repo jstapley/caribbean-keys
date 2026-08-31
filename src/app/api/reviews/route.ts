@@ -21,6 +21,10 @@ export async function GET() {
     const response = await fetch(url)
     const data = await response.json()
 
+    console.log('Places API status:', data.status)
+    console.log('Places API error:', data.error_message)
+    console.log('Places API result keys:', Object.keys(data.result || {}))
+
     if (data.status !== 'OK') {
       console.error('Places API error:', data.status, data.error_message)
       return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 })
