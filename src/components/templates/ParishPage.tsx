@@ -38,6 +38,7 @@ export default function ParishPage({
           .select('*')
           .eq('parish', parishName)
           .in('listing_status', ['active', 'new'])
+          .eq('is_archived', false)
           .order('created_at', { ascending: false })
 
         if (error) {

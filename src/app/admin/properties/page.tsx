@@ -5,13 +5,14 @@ import { supabase } from "@/lib/supabase/client"
 import { AdminNav } from "@/components/admin/AdminNav"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Plus, Edit, Trash2, Eye } from "lucide-react"
+import { Plus, Edit, Archive, ArchiveRestore, Eye } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
 import Image from "next/image"
 
 export default function AdminPropertiesPage() {
   const [properties, setProperties] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [showArchived, setShowArchived] = useState(false)
 
   useEffect(() => {
     async function fetchProperties() {
@@ -37,28 +38,67 @@ export default function AdminPropertiesPage() {
     fetchProperties()
   }, [])
 
-  const handleDelete = async (propertyId: string, propertyName: string) => {
-    if (!confirm(`Are you sure you want to delete "${propertyName}"? This action cannot be undone.`)) {
+  const handleArchive = async (propertyId: string, propertyName: string) => {
+    if (!confirm(`Archive "${propertyName}"?\n\nThis removes it from the public website but keeps the record intact. You can restore it anytime from here.`)) {
       return
     }
 
     try {
       const { error } = await supabase
         .from('properties')
-        .delete()
+        .update({
+          is_archived: true,
+          archived_at: new Date().toISOString(),
+        })
         .eq('id', propertyId)
 
       if (error) throw error
 
-      // Remove from local state
-      setProperties(properties.filter(p => p.id !== propertyId))
-      
-      alert('Property deleted successfully!')
+      // Update local state
+      setProperties(properties.map(p =>
+        p.id === propertyId ? { ...p, is_archived: true, archived_at: new Date().toISOString() } : p
+      ))
+
+      alert('Property archived successfully!')
     } catch (error: any) {
-      console.error('Error deleting property:', error)
-      alert('Failed to delete property: ' + error.message)
+      console.error('Error archiving property:', error)
+      alert('Failed to archive property: ' + error.message)
     }
   }
+
+  const handleRestore = async (propertyId: string, propertyName: string) => {
+    if (!confirm(`Restore "${propertyName}"?\n\nThis will make it visible on the public website again.`)) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('properties')
+        .update({
+          is_archived: false,
+          archived_at: null,
+        })
+        .eq('id', propertyId)
+
+      if (error) throw error
+
+      // Update local state
+      setProperties(properties.map(p =>
+        p.id === propertyId ? { ...p, is_archived: false, archived_at: null } : p
+      ))
+
+      alert('Property restored successfully!')
+    } catch (error: any) {
+      console.error('Error restoring property:', error)
+      alert('Failed to restore property: ' + error.message)
+    }
+  }
+
+  const visibleProperties = showArchived
+    ? properties
+    : properties.filter(p => !p.is_archived)
+
+  const archivedCount = properties.filter(p => p.is_archived).length
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -78,6 +118,21 @@ export default function AdminPropertiesPage() {
             </Link>
           </Button>
         </div>
+
+        {/* Archived Filter Toggle */}
+        {archivedCount > 0 && (
+          <div className="mb-4 flex items-center">
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                className="rounded border-gray-300 text-caribbean-gold focus:ring-caribbean-gold"
+              />
+              Show archived properties ({archivedCount})
+            </label>
+          </div>
+        )}
 
         {/* Properties Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -100,14 +155,14 @@ export default function AdminPropertiesPage() {
                       Loading properties...
                     </td>
                   </tr>
-                ) : properties.length > 0 ? (
-                  properties.map((property) => {
+                ) : visibleProperties.length > 0 ? (
+                  visibleProperties.map((property) => {
                   const imageUrl = property.images && Array.isArray(property.images) && property.images.length > 0
                     ? property.images[0]
                     : '/images/properties/garden1.jpg'
 
                   return (
-                    <tr key={property.id} className="hover:bg-gray-50">
+                    <tr key={property.id} className={`hover:bg-gray-50 ${property.is_archived ? 'opacity-50' : ''}`}>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
@@ -140,14 +195,21 @@ export default function AdminPropertiesPage() {
                         {formatPrice(property.price_asking)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          property.listing_status === 'active' ? 'bg-green-100 text-green-800' :
-                          property.listing_status === 'new' ? 'bg-blue-100 text-blue-800' :
-                          property.listing_status === 'under_contract' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {property.listing_status}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            property.listing_status === 'active' ? 'bg-green-100 text-green-800' :
+                            property.listing_status === 'new' ? 'bg-blue-100 text-blue-800' :
+                            property.listing_status === 'under_contract' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {property.listing_status}
+                          </span>
+                          {property.is_archived && (
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                              Archived
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -171,14 +233,25 @@ export default function AdminPropertiesPage() {
                               <Edit className="h-4 w-4" />
                             </Link>
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => handleDelete(property.id, property.property_name)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {property.is_archived ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-green-600 hover:text-green-700"
+                              onClick={() => handleRestore(property.id, property.property_name)}
+                            >
+                              <ArchiveRestore className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleArchive(property.id, property.property_name)}
+                            >
+                              <Archive className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -206,16 +279,17 @@ export default function AdminPropertiesPage() {
               </tbody>
             </table>
 
-            {(!properties || properties.length === 0) && !loading && (
+            {(!visibleProperties || visibleProperties.length === 0) && !loading && (
               <></>
             )}
           </div>
         </div>
 
         {/* Property Count */}
-        {!loading && properties && properties.length > 0 && (
+        {!loading && visibleProperties && visibleProperties.length > 0 && (
           <div className="mt-4 text-sm text-gray-600">
-            Showing {properties.length} {properties.length === 1 ? 'property' : 'properties'}
+            Showing {visibleProperties.length} {visibleProperties.length === 1 ? 'property' : 'properties'}
+            {!showArchived && archivedCount > 0 && ` (${archivedCount} archived hidden)`}
           </div>
         )}
       </div>

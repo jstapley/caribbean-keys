@@ -46,6 +46,7 @@ async function getProperty(slug: string) {
     .from('properties')
     .select('*')
     .eq('slug', slug)
+    .eq('is_archived', false)
     .single()
   return data
 }

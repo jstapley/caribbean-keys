@@ -83,6 +83,7 @@ export default async function PropertyDetailPage({ params }: any) {
     .from('properties')
     .select('*')
     .eq('slug', slug)
+    .eq('is_archived', false)
     .single()
 
   if (error || !property) {
@@ -95,6 +96,7 @@ export default async function PropertyDetailPage({ params }: any) {
     .neq('id', property.id)
     .or(`parish.eq.${property.parish},property_type.eq.${property.property_type}`)
     .in('listing_status', ['active', 'new'])
+    .eq('is_archived', false)
     .limit(3)
 
   const propertySchema = getPropertySchema(property)

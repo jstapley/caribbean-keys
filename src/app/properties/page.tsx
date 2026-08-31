@@ -32,6 +32,7 @@ export default function PropertiesPage() {
           .from('properties')
           .select('*')
           .in('listing_status', ['active', 'new', 'under_contract'])
+          .eq('is_archived', false)
           .order('created_at', { ascending: false })
 
         if (error) throw error

@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ImageUpload } from "@/components/admin/ImageUpload"
 import { LocationPicker } from "@/components/admin/LocationPicker"
 import { PARISHES, PROPERTY_TYPES, PROPERTY_FEATURES } from "@/lib/constants"
-import { ChevronLeft, Save, Trash2 } from "lucide-react"
+import { ChevronLeft, Save, Archive } from "lucide-react"
 import Link from "next/link"
 
 interface EditPropertyClientProps {
@@ -24,7 +24,7 @@ interface EditPropertyClientProps {
 export function EditPropertyClient({ property }: EditPropertyClientProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+  const [archiving, setArchiving] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
   
@@ -147,34 +147,37 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm(`⚠️ Delete "${property.property_name}"?\n\nThis will permanently remove this property from the website.\n\nThis action CANNOT be undone.\n\nAre you absolutely sure?`)) {
+  const handleArchive = async () => {
+    if (!confirm(`Archive "${property.property_name}"?\n\nThis will remove it from the public website, but keeps the record (and any inquiries linked to it) intact. You can find archived properties in the admin list and restore this one later if needed.`)) {
       return
     }
 
-    setDeleting(true)
+    setArchiving(true)
     setError("")
 
     try {
-      // Delete property from database
-      const { error: deleteError } = await supabase
+      // Soft delete: mark as archived instead of removing the row.
+      // Keeps property_inquiries records intact (avoids FK constraint errors)
+      // and preserves history for Ross's records.
+      const { error: archiveError } = await supabase
         .from('properties')
-        .delete()
+        .update({
+          is_archived: true,
+          archived_at: new Date().toISOString(),
+        })
         .eq('id', property.id)
 
-      if (deleteError) throw deleteError
+      if (archiveError) throw archiveError
 
-      // TODO: Delete associated images from storage
-
-      alert(`✅ Property Deleted\n\n"${property.property_name}" has been permanently removed from the website.`)
+      alert(`✅ Property Archived\n\n"${property.property_name}" has been removed from the public website. It's still visible in the admin list under archived properties.`)
       router.push('/admin/properties')
       router.refresh()
     } catch (error: any) {
-      console.error('Error deleting property:', error)
-      const errorMessage = error.message || 'Failed to delete property'
-      alert(`❌ Error Deleting Property\n\n${errorMessage}\n\nThe property was not deleted. Please try again.`)
+      console.error('Error archiving property:', error)
+      const errorMessage = error.message || 'Failed to archive property'
+      alert(`❌ Error Archiving Property\n\n${errorMessage}\n\nThe property was not archived. Please try again.`)
       setError(errorMessage)
-      setDeleting(false)
+      setArchiving(false)
     }
   }
 
@@ -198,13 +201,13 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
               <p className="text-gray-600">Update property details</p>
             </div>
             <Button
-              onClick={handleDelete}
-              disabled={deleting}
+              onClick={handleArchive}
+              disabled={archiving}
               variant="outline"
               className="border-red-500 text-red-500 hover:bg-red-50"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              {deleting ? 'Deleting...' : 'Delete Property'}
+              <Archive className="h-4 w-4 mr-2" />
+              {archiving ? 'Archiving...' : 'Archive Property'}
             </Button>
           </div>
         </div>

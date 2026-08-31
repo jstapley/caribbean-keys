@@ -9,11 +9,11 @@ const supabase = createClient(
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://caribbean-keys.vercel.app'
 
 export async function GET() {
-  // Fetch all active properties
+  // Fetch all non-archived properties (sold properties stay indexed for SEO/social proof)
   const { data: properties } = await supabase
     .from('properties')
     .select('slug, updated_at')
-    .neq('listing_status', 'sold')
+    .eq('is_archived', false)
 
   // Static pages
   const staticPages = [
