@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server"
 
 const PLACE_ID = "ChIJe6QII3GTEowRru734EvcgeM"
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+const API_KEY = process.env.GOOGLE_PLACES_API_KEY
 
 // Cache reviews for 24 hours
 let cachedReviews: any = null
