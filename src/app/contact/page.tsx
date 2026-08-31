@@ -57,19 +57,15 @@ export default function ContactPage() {
         message: formData.message.trim() || 'No message provided'
       }
 
-      // 1. Save to Supabase
-      const { data: supabaseData, error: supabaseError } = await supabase
+      // Save to Supabase
+      const { error: supabaseError } = await supabase
         .from('property_inquiries')
         .insert([inquiryData] as any)
-        .select()
-        .single()
 
       if (supabaseError) {
         console.error('Supabase error:', supabaseError)
         throw new Error('Failed to submit inquiry. Please try again.')
       }
-
-      console.log('Saved to Supabase:', supabaseData)
 
       // Success!
       GA.contactFormSubmit()
