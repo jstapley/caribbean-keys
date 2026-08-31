@@ -2,6 +2,7 @@
 "use client"
 
 import { useState } from "react"
+import { GA } from "@/lib/analytics"
 
 const WHATSAPP_NUMBER = "17057255824"
 const WHATSAPP_MESSAGE = "Hi Ross! I'm interested in learning more about properties in Antigua."
@@ -19,6 +20,7 @@ export function WhatsAppButton() {
       className="fixed bottom-6 right-6 z-50 flex items-center gap-3 group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => GA.whatsappClick()}
       aria-label="Chat on WhatsApp"
     >
       {/* Tooltip */}

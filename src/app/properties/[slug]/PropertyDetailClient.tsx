@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { GA } from "@/lib/analytics"
 import { Textarea } from "@/components/ui/textarea"
 import { PropertyCard } from "@/components/property/PropertyCard"
 import { 
@@ -136,6 +137,7 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
       }
 
       // Success!
+      GA.propertyInquirySubmit(property.property_name)
       setInquirySuccess(true)
       setInquiryForm({
         first_name: "",
@@ -254,6 +256,7 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
                   size="sm"
                   className="border-caribbean-gold text-caribbean-gold hover:bg-caribbean-gold hover:text-white"
                   onClick={() => {
+                    GA.shareProperty(property.property_name)
                     const url = window.location.href
                     const title = property.property_name
                     if (navigator.share) {
@@ -525,6 +528,7 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
               <div className="mt-6 pt-6 border-t space-y-3">
                 <a
                   href="tel:+17057255824"
+                  onClick={() => GA.phoneClick()}
                   className="flex items-center justify-center w-full px-4 py-2 border-2 border-caribbean-gold text-caribbean-gold hover:bg-caribbean-gold hover:text-white rounded-md transition font-semibold"
                 >
                   <Phone className="h-4 w-4 mr-2" />
