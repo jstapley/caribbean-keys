@@ -69,7 +69,7 @@ export default async function SocialLandingPage({ params }: { params: { slug: st
       {/* Logo Header */}
       <div className="w-full max-w-md px-4 pt-6 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/images/logo.png" alt="Caribbean Keys" className="h-8 w-8 rounded-full" />
+          <img src="/images/caribbean-keys-logo.png" alt="Caribbean Keys" className="h-8 w-8 rounded-full" />
           <div>
             <p className="text-white font-bold text-sm leading-none">Caribbean Keys</p>
             <p className="text-gray-400 text-xs">Real Estate</p>
