@@ -407,14 +407,14 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
                 />
               </div>
               <div>
-                <Label htmlFor="tiktok_url">Portrait Video URL (TikTok or Instagram Reels)</Label>
-                <p className="text-xs text-gray-500 mb-2">Used on the mobile social landing page at /p/{formData.property_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'property-name'}</p>
+                <Label htmlFor="tiktok_url">Social Video URL</Label>
+                <p className="text-xs text-gray-500 mb-2">Supports TikTok, Instagram Reels, Facebook Videos/Reels, YouTube Shorts. Used on the mobile social landing page at /p/{formData.property_name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'property-name'}</p>
                 <Input
                   id="tiktok_url"
                   type="url"
                   value={formData.tiktok_url}
                   onChange={(e) => handleInputChange('tiktok_url', e.target.value)}
-                  placeholder="https://www.tiktok.com/@antigua.dreams/video/..."
+                  placeholder="Paste any TikTok, Instagram, Facebook or YouTube Shorts URL..."
                 />
               </div>
             </div>

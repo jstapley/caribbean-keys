@@ -5,8 +5,8 @@ import { supabase } from "@/lib/supabase/client"
 import { formatPrice } from "@/lib/utils"
 import { Bed, Bath, Maximize, MapPin, ArrowRight, Phone, Mail } from "lucide-react"
 
-// Convert TikTok/Instagram URLs to embed format
-function getPortraitEmbedUrl(url: string): string | null {
+// Convert TikTok/Instagram/Facebook/YouTube URLs to embed format
+function getSocialEmbedUrl(url: string): string | null {
   if (!url) return null
 
   // TikTok
@@ -17,14 +17,35 @@ function getPortraitEmbedUrl(url: string): string | null {
 
   // Instagram Reels
   if (url.includes('instagram.com/reel') || url.includes('instagram.com/p/')) {
-    const shortcode = url.split('/reel/')[1]?.split('/')[0] 
+    const shortcode = url.split('/reel/')[1]?.split('/')[0]
       || url.split('/p/')[1]?.split('/')[0]
     if (shortcode) return `https://www.instagram.com/p/${shortcode}/embed`
   }
 
+  // Facebook Watch / Reels / Videos
+  if (url.includes('facebook.com') || url.includes('fb.watch')) {
+    // fb.watch short URLs
+    if (url.includes('fb.watch')) {
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
+    }
+    // Facebook reels
+    if (url.includes('/reel/')) {
+      const reelId = url.split('/reel/')[1]?.split('?')[0]?.split('/')[0]
+      if (reelId) return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
+    }
+    // Facebook watch / video
+    const videoId = url.split('v=')[1]?.split('&')[0]
+      || url.split('/videos/')[1]?.split('?')[0]?.split('/')[0]
+    if (videoId) {
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
+    }
+    // Fallback for any facebook URL
+    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
+  }
+
   // YouTube Shorts
   if (url.includes('youtube.com/shorts/') || url.includes('youtu.be/')) {
-    const videoId = url.includes('shorts/') 
+    const videoId = url.includes('shorts/')
       ? url.split('shorts/')[1]?.split('?')[0]
       : url.split('youtu.be/')[1]?.split('?')[0]
     if (videoId) return `https://www.youtube.com/embed/${videoId}`
@@ -48,7 +69,7 @@ export default async function SocialLandingPage({ params }: { params: { slug: st
 
   if (!property) notFound()
 
-  const embedUrl = getPortraitEmbedUrl(property.tiktok_url)
+  const embedUrl = getSocialEmbedUrl(property.tiktok_url)
   const firstImage = property.images?.[0] || '/images/placeholder-property.jpg'
 
   return (
