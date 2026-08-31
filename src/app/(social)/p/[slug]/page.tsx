@@ -5,9 +5,13 @@ import { supabase } from "@/lib/supabase/client"
 import { formatPrice } from "@/lib/utils"
 import { Bed, Bath, Maximize, MapPin, ArrowRight, Phone, Mail } from "lucide-react"
 
-// Convert TikTok/Instagram/Facebook/YouTube URLs to embed format
+// Convert social video URLs to embed format
+// Returns null for Facebook (not embeddable) - handled separately
 function getSocialEmbedUrl(url: string): string | null {
   if (!url) return null
+
+  // Skip Facebook - not reliably embeddable
+  if (url.includes('facebook.com') || url.includes('fb.watch')) return null
 
   // TikTok
   if (url.includes('tiktok.com')) {
@@ -22,27 +26,6 @@ function getSocialEmbedUrl(url: string): string | null {
     if (shortcode) return `https://www.instagram.com/p/${shortcode}/embed`
   }
 
-  // Facebook Watch / Reels / Videos
-  if (url.includes('facebook.com') || url.includes('fb.watch')) {
-    // fb.watch short URLs
-    if (url.includes('fb.watch')) {
-      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
-    }
-    // Facebook reels
-    if (url.includes('/reel/')) {
-      const reelId = url.split('/reel/')[1]?.split('?')[0]?.split('/')[0]
-      if (reelId) return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
-    }
-    // Facebook watch / video
-    const videoId = url.split('v=')[1]?.split('&')[0]
-      || url.split('/videos/')[1]?.split('?')[0]?.split('/')[0]
-    if (videoId) {
-      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
-    }
-    // Fallback for any facebook URL
-    return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&mute=0`
-  }
-
   // YouTube Shorts
   if (url.includes('youtube.com/shorts/') || url.includes('youtu.be/')) {
     const videoId = url.includes('shorts/')
@@ -52,6 +35,10 @@ function getSocialEmbedUrl(url: string): string | null {
   }
 
   return null
+}
+
+function isFacebookUrl(url: string): boolean {
+  return url?.includes('facebook.com') || url?.includes('fb.watch')
 }
 
 async function getProperty(slug: string) {
@@ -95,7 +82,7 @@ export default async function SocialLandingPage({ params }: { params: { slug: st
         )}
       </div>
 
-      {/* Portrait Video or Image */}
+      {/* Portrait Video, Facebook Button, or Image */}
       <div className="w-full max-w-md px-4">
         {embedUrl ? (
           <div className="relative w-full rounded-2xl overflow-hidden bg-black" style={{ aspectRatio: '9/16' }}>
@@ -106,8 +93,30 @@ export default async function SocialLandingPage({ params }: { params: { slug: st
               allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
             />
           </div>
+        ) : isFacebookUrl(property.tiktok_url) ? (
+          // Facebook - show thumbnail + watch button
+          <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: '9/16' }}>
+            <img
+              src={firstImage}
+              alt={property.property_name}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-4">
+              <svg className="w-16 h-16 text-white opacity-80" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+              <a
+                href={property.tiktok_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-full transition flex items-center gap-2"
+              >
+                Watch on Facebook
+              </a>
+            </div>
+          </div>
         ) : (
-          // Fallback to image if no portrait video
+          // Fallback to image
           <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: '9/16' }}>
             <img
               src={firstImage}
