@@ -8,6 +8,11 @@ const supabase = createClient(
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://caribbean-keys.vercel.app'
 
+// Force this route to run fresh on every request instead of being
+// statically generated at build time (which was serving stale/archived
+// properties for hours after they were archived).
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   // Fetch all non-archived properties (sold properties stay indexed for SEO/social proof)
   const { data: properties } = await supabase
@@ -50,7 +55,7 @@ export async function GET() {
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml',
-      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+      'Cache-Control': 'public, max-age=300, stale-while-revalidate=600',
     },
   })
 }
