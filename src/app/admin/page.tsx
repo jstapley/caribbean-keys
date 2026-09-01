@@ -34,7 +34,7 @@ export default function AdminDashboard() {
           setProperties(propertiesData || [])
         }
 
-        // Fetch inquiries
+        // Fetch inquiries (used for the Recent Clients panel + Total Inquiries stat)
         const { data: inquiriesData, error: inquiriesError } = await supabase
           .from('property_inquiries')
           .select('*')
@@ -182,10 +182,10 @@ export default function AdminDashboard() {
             </Button>
           </div>
 
-          {/* Recent Inquiries */}
+          {/* Recent Clients */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-caribbean-navy">Recent Inquiries</h2>
+              <h2 className="text-xl font-bold text-caribbean-navy">Recent Clients</h2>
             </div>
 
             <div className="space-y-3">
@@ -211,13 +211,13 @@ export default function AdminDashboard() {
               ) : (
                 <div className="text-center py-8 text-gray-500">
                   <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>No inquiries yet</p>
+                  <p>No clients yet</p>
                 </div>
               )}
             </div>
 
             <Button asChild variant="outline" className="w-full mt-4 border-caribbean-gold text-caribbean-gold hover:bg-caribbean-gold hover:text-white">
-              <Link href="/admin/inquiries">View All Inquiries</Link>
+              <Link href="/admin/clients">View All Clients</Link>
             </Button>
           </div>
         </div>

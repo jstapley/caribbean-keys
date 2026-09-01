@@ -8,7 +8,7 @@ import {
   Home, 
   Building2, 
   ImageIcon, 
-  MessageSquare, 
+  Users, 
   LogOut,
   Menu,
   X
@@ -24,7 +24,7 @@ export function AdminNav() {
   const navigation = [
     { name: "Dashboard", href: "/admin", icon: Home },
     { name: "Properties", href: "/admin/properties", icon: Building2 },
-    { name: "Inquiries", href: "/admin/inquiries", icon: MessageSquare },
+    { name: "Clients", href: "/admin/clients", icon: Users },
   ]
 
   const handleLogout = async () => {
