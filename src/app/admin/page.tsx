@@ -17,15 +17,18 @@ import { formatPrice } from "@/lib/utils"
 export default function AdminDashboard() {
   const [properties, setProperties] = useState<any[]>([])
   const [inquiries, setInquiries] = useState<any[]>([])
+  const [totalInquiries, setTotalInquiries] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch properties
+        // Fetch properties (excluding archived - those only show in the full
+        // properties list behind the "Show archived" toggle)
         const { data: propertiesData, error: propertiesError } = await supabase
           .from('properties')
           .select('*')
+          .eq('is_archived', false)
           .order('created_at', { ascending: false })
 
         if (propertiesError) {
@@ -34,7 +37,20 @@ export default function AdminDashboard() {
           setProperties(propertiesData || [])
         }
 
-        // Fetch inquiries (used for the Recent Clients panel + Total Inquiries stat)
+        // Total inquiry count (unlimited) - used for the stat card.
+        // Kept separate from the 5-row preview below so the count is accurate
+        // once there are more than 5 inquiries.
+        const { count, error: countError } = await supabase
+          .from('property_inquiries')
+          .select('*', { count: 'exact', head: true })
+
+        if (countError) {
+          console.error('Error fetching inquiry count:', countError)
+        } else {
+          setTotalInquiries(count || 0)
+        }
+
+        // Fetch just the 5 most recent inquiries for the Recent Clients preview
         const { data: inquiriesData, error: inquiriesError } = await supabase
           .from('property_inquiries')
           .select('*')
@@ -95,7 +111,7 @@ export default function AdminDashboard() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Inquiries</p>
                 <p className="text-3xl font-bold text-caribbean-navy">
-                  {loading ? '...' : inquiries.length}
+                  {loading ? '...' : totalInquiries}
                 </p>
               </div>
               <div className="bg-caribbean-gold/20 p-3 rounded-full">
