@@ -38,6 +38,7 @@ const PREFERENCE_TAGS = [
   "Gated Community",
   "Beach Access",
   "Furnished",
+  "Private Dock",
 ]
 
 export default function ClientOnboardingPage() {
@@ -131,6 +132,11 @@ export default function ClientOnboardingPage() {
         .filter(Boolean)
         .join("\n\n")
 
+      // Oceanfront and Private Dock are now selected via the tag buttons
+      // rather than separate checkboxes, so derive the boolean columns from there
+      const oceanfront = formData.preference_tags.includes("Ocean Front")
+      const dock = formData.preference_tags.includes("Private Dock")
+
       const { error: insertError } = await supabase.from("client_onboarding").insert([
         {
           first_name: formData.first_name,
@@ -146,8 +152,8 @@ export default function ClientOnboardingPage() {
           target_purchase_date: formData.target_purchase_date || null,
           bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
           bathrooms: formData.bathrooms ? parseFloat(formData.bathrooms) : null,
-          oceanfront: formData.oceanfront,
-          dock: formData.dock,
+          oceanfront,
+          dock,
           additional_notes: combinedNotes || null,
           documents: uploadedPaths,
         },
@@ -421,27 +427,6 @@ export default function ClientOnboardingPage() {
                     placeholder="2"
                   />
                 </div>
-              </div>
-
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.oceanfront}
-                    onChange={(e) => handleChange("oceanfront", e.target.checked)}
-                    className="rounded border-gray-300 text-caribbean-gold focus:ring-caribbean-gold"
-                  />
-                  <span className="text-sm text-gray-700">Oceanfront</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.dock}
-                    onChange={(e) => handleChange("dock", e.target.checked)}
-                    className="rounded border-gray-300 text-caribbean-gold focus:ring-caribbean-gold"
-                  />
-                  <span className="text-sm text-gray-700">Private Dock</span>
-                </label>
               </div>
 
               <div>
