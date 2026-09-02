@@ -19,7 +19,6 @@ export function Header() {
     { name: "PROJECTS", href: "#", hasDropdown: true },
     { name: "LOCATIONS", href: "#", hasDropdown: true },
     { name: "ABOUT", href: "/about" },
-    { name: "CONTACT", href: "/contact" },
   ]
 
   const projects = [
