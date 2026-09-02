@@ -9,6 +9,7 @@ import {
   Building2, 
   ImageIcon, 
   Users, 
+  Star,
   LogOut,
   Menu,
   X
@@ -25,6 +26,7 @@ export function AdminNav() {
     { name: "Dashboard", href: "/admin", icon: Home },
     { name: "Properties", href: "/admin/properties", icon: Building2 },
     { name: "Clients", href: "/admin/clients", icon: Users },
+    { name: "VIP Clients", href: "/admin/vip-clients", icon: Star },
   ]
 
   const handleLogout = async () => {
