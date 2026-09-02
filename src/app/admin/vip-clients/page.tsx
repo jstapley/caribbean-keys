@@ -1,534 +1,376 @@
 // @ts-nocheck
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
+import { AdminNav } from "@/components/admin/AdminNav"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
-  User,
-  MapPin,
+  Star,
   Calendar,
   Home,
-  FileText,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Upload,
-  Lock,
+  Search,
+  Mail,
+  Phone,
   X,
+  FileText,
+  Download,
 } from "lucide-react"
 
-const STEPS = [
-  { id: 1, label: "Personal Info", icon: User },
-  { id: 2, label: "Location", icon: MapPin },
-  { id: 3, label: "Timeline", icon: Calendar },
-  { id: 4, label: "Preferences", icon: Home },
-  { id: 5, label: "Documents", icon: FileText },
-]
+const STATUS_OPTIONS = ["new", "contacted", "in_progress", "completed"]
 
-const PREFERENCE_TAGS = [
-  "Ocean Front",
-  "Ocean View",
-  "Mountain View",
-  "Garden View",
-  "Pool",
-  "Gated Community",
-  "Beach Access",
-  "Furnished",
-  "Private Dock",
-]
+const STATUS_STYLES: Record<string, string> = {
+  new: "bg-blue-100 text-blue-800",
+  contacted: "bg-yellow-100 text-yellow-800",
+  in_progress: "bg-purple-100 text-purple-800",
+  completed: "bg-green-100 text-green-800",
+}
 
-export default function ClientOnboardingPage() {
-  const [step, setStep] = useState(1)
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState("")
-  const [files, setFiles] = useState<File[]>([])
+export default function AdminVipClientsPage() {
+  const [clients, setClients] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone: "",
-    street_address: "",
-    city: "",
-    state_province: "",
-    country: "",
-    nationality: "",
-    price_range: "",
-    target_purchase_date: "",
-    bedrooms: "",
-    bathrooms: "",
-    oceanfront: false,
-    dock: false,
-    preference_tags: [] as string[],
-    additional_notes: "",
+  useEffect(() => {
+    fetchClients()
+  }, [])
+
+  async function fetchClients() {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from("client_onboarding")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching VIP clients:", error)
+      } else {
+        setClients(data || [])
+      }
+    } catch (error) {
+      console.error("Error:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    setUpdatingStatus(id)
+    try {
+      const { error } = await supabase
+        .from("client_onboarding")
+        .update({ status: newStatus })
+        .eq("id", id)
+
+      if (error) throw error
+
+      setClients((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, status: newStatus } : c))
+      )
+    } catch (error: any) {
+      console.error("Error updating status:", error)
+      alert("Failed to update status: " + error.message)
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleViewDocument = async (path: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("client-documents")
+        .createSignedUrl(path, 300) // 5 minute expiry
+
+      if (error) throw error
+      window.open(data.signedUrl, "_blank")
+    } catch (error: any) {
+      console.error("Error generating document link:", error)
+      alert("Could not open document: " + error.message)
+    }
+  }
+
+  const filteredClients = clients.filter((client) => {
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      client.first_name?.toLowerCase().includes(q) ||
+      client.last_name?.toLowerCase().includes(q) ||
+      client.email?.toLowerCase().includes(q) ||
+      client.country?.toLowerCase().includes(q)
+    )
   })
 
-  const handleChange = (field: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const toggleTag = (tag: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      preference_tags: prev.preference_tags.includes(tag)
-        ? prev.preference_tags.filter((t) => t !== tag)
-        : [...prev.preference_tags, tag],
-    }))
-  }
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles((prev) => [...prev, ...Array.from(e.target.files!)])
-    }
-  }
-
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const canContinue = () => {
-    if (step === 1) return formData.first_name && formData.email
-    return true
-  }
-
-  const handleNext = () => {
-    if (step < 5) setStep(step + 1)
-  }
-
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1)
-  }
-
-  const handleSubmit = async () => {
-    setSubmitting(true)
-    setError("")
-
-    try {
-      // Upload documents first (if any) to the private client-documents bucket
-      const uploadedPaths: string[] = []
-      for (const file of files) {
-        const filePath = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name}`
-        const { error: uploadError } = await supabase.storage
-          .from("client-documents")
-          .upload(filePath, file)
-
-        if (uploadError) throw uploadError
-        uploadedPaths.push(filePath)
-      }
-
-      // Combine the "Important to me" tags into additional_notes for now,
-      // since preference_tags doesn't have its own column yet
-      const combinedNotes = [
-        formData.preference_tags.length > 0
-          ? `Important to them: ${formData.preference_tags.join(", ")}`
-          : "",
-        formData.additional_notes,
-      ]
-        .filter(Boolean)
-        .join("\n\n")
-
-      // Oceanfront and Private Dock are now selected via the tag buttons
-      // rather than separate checkboxes, so derive the boolean columns from there
-      const oceanfront = formData.preference_tags.includes("Ocean Front")
-      const dock = formData.preference_tags.includes("Private Dock")
-
-      const { error: insertError } = await supabase.from("client_onboarding").insert([
-        {
-          first_name: formData.first_name,
-          last_name: formData.last_name || null,
-          email: formData.email,
-          phone: formData.phone || null,
-          street_address: formData.street_address || null,
-          city: formData.city || null,
-          state_province: formData.state_province || null,
-          country: formData.country || null,
-          nationality: formData.nationality || null,
-          price_range: formData.price_range || null,
-          target_purchase_date: formData.target_purchase_date || null,
-          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-          bathrooms: formData.bathrooms ? parseFloat(formData.bathrooms) : null,
-          oceanfront,
-          dock,
-          additional_notes: combinedNotes || null,
-          documents: uploadedPaths,
-        },
-      ])
-
-      if (insertError) throw insertError
-
-      setSubmitted(true)
-    } catch (err: any) {
-      console.error("Onboarding submission error:", err)
-      setError(err.message || "Something went wrong. Please try again.")
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-md p-8 text-center">
-          <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-            <Check className="h-8 w-8 text-green-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-caribbean-navy mb-2">
-            Application Submitted
-          </h1>
-          <p className="text-gray-600">
-            Thank you, {formData.first_name}. Ross will review your details and
-            be in touch shortly to help find your perfect property in Antigua.
-          </p>
-        </div>
-      </div>
-    )
-  }
+  const totalClients = clients.length
+  const now = new Date()
+  const clientsThisMonth = clients.filter((c) => {
+    if (!c.created_at) return false
+    const d = new Date(c.created_at)
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+  }).length
+  const newCount = clients.filter((c) => c.status === "new").length
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-caribbean-navy mb-2">
-            Client Onboarding
-          </h1>
-          <p className="text-gray-500">
-            Please complete all sections so we can find your perfect property.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <AdminNav />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-caribbean-navy mb-2">VIP Clients</h1>
+          <p className="text-gray-600">Clients who completed the onboarding process</p>
         </div>
 
-        {/* Progress Stepper */}
-        <div className="flex items-start justify-between mb-8 max-w-xl mx-auto">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon
-            const isActive = s.id === step
-            const isComplete = s.id < step
-            return (
-              <div key={s.id} className="flex items-center flex-1 last:flex-none">
-                <div className="flex flex-col items-center gap-2">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition ${
-                      isActive || isComplete
-                        ? "bg-caribbean-navy text-white"
-                        : "bg-gray-200 text-gray-400"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span
-                    className={`text-xs font-medium whitespace-nowrap ${
-                      isActive ? "text-caribbean-navy" : "text-gray-400"
-                    }`}
-                  >
-                    {s.label}
-                  </span>
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div
-                    className={`flex-1 h-px mx-2 mt-[-20px] ${
-                      isComplete ? "bg-caribbean-navy" : "bg-gray-200"
-                    }`}
-                  />
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-            {error}
-          </div>
-        )}
-
-        {/* Step Card */}
-        <div className="bg-white rounded-2xl shadow-md p-8">
-          {step === 1 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-caribbean-navy mb-4">
-                Personal Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="first_name">First Name *</Label>
-                  <Input
-                    id="first_name"
-                    value={formData.first_name}
-                    onChange={(e) => handleChange("first_name", e.target.value)}
-                    placeholder="Jane"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="last_name">Last Name</Label>
-                  <Input
-                    id="last_name"
-                    value={formData.last_name}
-                    onChange={(e) => handleChange("last_name", e.target.value)}
-                    placeholder="Smith"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    placeholder="jane@example.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleChange("phone", e.target.value)}
-                    placeholder="+1 268-555-0000"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-caribbean-navy mb-4">
-                Location
-              </h2>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="street_address">Street Address</Label>
-                <Input
-                  id="street_address"
-                  value={formData.street_address}
-                  onChange={(e) => handleChange("street_address", e.target.value)}
-                  placeholder="123 Main Street"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => handleChange("city", e.target.value)}
-                    placeholder="City"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="state_province">State / Province</Label>
-                  <Input
-                    id="state_province"
-                    value={formData.state_province}
-                    onChange={(e) => handleChange("state_province", e.target.value)}
-                    placeholder="State"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="country">Country</Label>
-                  <Input
-                    id="country"
-                    value={formData.country}
-                    onChange={(e) => handleChange("country", e.target.value)}
-                    placeholder="Country"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="nationality">Nationality</Label>
-                  <Input
-                    id="nationality"
-                    value={formData.nationality}
-                    onChange={(e) => handleChange("nationality", e.target.value)}
-                    placeholder="e.g. Canadian"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-caribbean-navy mb-4">
-                Purchase Timeline
-              </h2>
-              <div>
-                <Label htmlFor="price_range">Budget / Price Range</Label>
-                <Input
-                  id="price_range"
-                  value={formData.price_range}
-                  onChange={(e) => handleChange("price_range", e.target.value)}
-                  placeholder="e.g. $500,000 - $1,000,000"
-                />
-              </div>
-              <div>
-                <Label htmlFor="target_purchase_date">Target Purchase Date</Label>
-                <Input
-                  id="target_purchase_date"
-                  type="date"
-                  value={formData.target_purchase_date}
-                  onChange={(e) => handleChange("target_purchase_date", e.target.value)}
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-caribbean-navy mb-4">
-                Property Preferences
-              </h2>
-
-              <div>
-                <Label className="mb-2 block">Important to me</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {PREFERENCE_TAGS.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => toggleTag(tag)}
-                      className={`px-4 py-2.5 rounded-lg border text-sm font-medium transition text-left ${
-                        formData.preference_tags.includes(tag)
-                          ? "border-caribbean-gold bg-caribbean-gold/10 text-caribbean-navy"
-                          : "border-gray-200 text-gray-600 hover:border-gray-300"
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="bedrooms">Bedrooms</Label>
-                  <Input
-                    id="bedrooms"
-                    type="number"
-                    min="0"
-                    value={formData.bedrooms}
-                    onChange={(e) => handleChange("bedrooms", e.target.value)}
-                    placeholder="3"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bathrooms">Bathrooms</Label>
-                  <Input
-                    id="bathrooms"
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={formData.bathrooms}
-                    onChange={(e) => handleChange("bathrooms", e.target.value)}
-                    placeholder="2"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="additional_notes">Additional Notes</Label>
-                <Textarea
-                  id="additional_notes"
-                  value={formData.additional_notes}
-                  onChange={(e) => handleChange("additional_notes", e.target.value)}
-                  placeholder="Anything else you'd like us to know about what you're looking for..."
-                  rows={4}
-                />
-              </div>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-caribbean-navy mb-1">
-                Upload Documents
-              </h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Documents like proof of funds or ID help us move faster once you find
-                the right property. Stored securely and never shared publicly.
-              </p>
-
-              <label className="block border-2 border-dashed border-gray-300 rounded-xl p-10 text-center cursor-pointer hover:border-caribbean-gold transition">
-                <Upload className="h-8 w-8 mx-auto text-gray-400 mb-3" />
-                <p className="text-gray-700 font-medium">Click to upload documents</p>
-                <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG, DOC up to 10MB</p>
-                <input
-                  type="file"
-                  className="hidden"
-                  multiple
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={handleFileSelect}
-                />
-              </label>
-
-              {files.length > 0 && (
-                <div className="space-y-2">
-                  {files.map((file, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm"
-                    >
-                      <span className="text-gray-700 truncate">{file.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(i)}
-                        className="text-gray-400 hover:text-red-500"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-start gap-2 bg-caribbean-gold/10 border border-caribbean-gold/30 rounded-lg p-3 text-sm text-caribbean-navy">
-                <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <p>
-                  Your documents are stored securely and only accessible to
-                  Caribbean Keys staff.
+                <p className="text-sm text-gray-600 mb-1">Total VIP Clients</p>
+                <p className="text-3xl font-bold text-caribbean-navy">
+                  {loading ? "..." : totalClients}
                 </p>
               </div>
+              <div className="bg-caribbean-blue/20 p-3 rounded-full">
+                <Star className="h-8 w-8 text-caribbean-navy" />
+              </div>
             </div>
-          )}
+            <p className="mt-4 text-sm text-gray-600">All time submissions</p>
+          </div>
 
-          {/* Navigation */}
-          <div className="flex justify-between mt-8">
-            {step > 1 ? (
-              <Button type="button" variant="outline" onClick={handleBack}>
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                Back
-              </Button>
-            ) : (
-              <div />
-            )}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">This Month</p>
+                <p className="text-3xl font-bold text-caribbean-navy">
+                  {loading ? "..." : clientsThisMonth}
+                </p>
+              </div>
+              <div className="bg-caribbean-gold/20 p-3 rounded-full">
+                <Calendar className="h-8 w-8 text-caribbean-navy" />
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-gray-600">New onboarding this month</p>
+          </div>
 
-            {step < 5 ? (
-              <Button
-                type="button"
-                onClick={handleNext}
-                disabled={!canContinue()}
-                className="bg-caribbean-navy hover:bg-caribbean-navy/90 text-white"
-              >
-                Continue
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="bg-caribbean-navy hover:bg-caribbean-navy/90 text-white"
-              >
-                {submitting ? "Submitting..." : "Submit Application"}
-                <Check className="h-4 w-4 ml-1" />
-              </Button>
-            )}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Needs Follow-up</p>
+                <p className="text-3xl font-bold text-caribbean-navy">
+                  {loading ? "..." : newCount}
+                </p>
+              </div>
+              <div className="bg-red-100 p-3 rounded-full">
+                <Home className="h-8 w-8 text-red-600" />
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-gray-600">Marked "new" status</p>
           </div>
         </div>
+
+        {/* Search */}
+        <div className="mb-4 relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by name, email, or country..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-9"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-caribbean-navy text-white">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Contact</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Budget</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Target Date</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      Loading VIP clients...
+                    </td>
+                  </tr>
+                ) : filteredClients.length > 0 ? (
+                  filteredClients.map((client) => {
+                    const isExpanded = expandedId === client.id
+                    const displayName =
+                      [client.first_name, client.last_name].filter(Boolean).join(" ") ||
+                      "Unknown"
+
+                    return (
+                      <>
+                        <tr
+                          key={client.id}
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setExpandedId(isExpanded ? null : client.id)}
+                        >
+                          <td className="px-6 py-4">
+                            <div className="font-semibold text-caribbean-navy">
+                              {displayName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {client.country || "—"}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900 flex items-center gap-1.5">
+                              <Mail className="h-3.5 w-3.5 text-gray-400" />
+                              {client.email}
+                            </div>
+                            {client.phone && (
+                              <div className="text-sm text-gray-600 flex items-center gap-1.5 mt-1">
+                                <Phone className="h-3.5 w-3.5 text-gray-400" />
+                                {client.phone}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {client.price_range || "—"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">
+                            {client.target_purchase_date
+                              ? new Date(client.target_purchase_date).toLocaleDateString()
+                              : "—"}
+                          </td>
+                          <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                            <select
+                              value={client.status || "new"}
+                              disabled={updatingStatus === client.id}
+                              onChange={(e) => handleStatusChange(client.id, e.target.value)}
+                              className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
+                                STATUS_STYLES[client.status] || STATUS_STYLES.new
+                              }`}
+                            >
+                              {STATUS_OPTIONS.map((s) => (
+                                <option key={s} value={s}>
+                                  {s.replace("_", " ")}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {client.created_at
+                              ? new Date(client.created_at).toLocaleDateString()
+                              : "N/A"}
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr key={`${client.id}-details`} className="bg-caribbean-seafoam/10">
+                            <td colSpan={6} className="px-6 py-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-500 mb-1">
+                                    Address
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {[client.street_address, client.city, client.state_province, client.country]
+                                      .filter(Boolean)
+                                      .join(", ") || "—"}
+                                  </p>
+                                  <p className="text-gray-500 text-xs mt-1">
+                                    Nationality: {client.nationality || "—"}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-500 mb-1">
+                                    Property Preferences
+                                  </p>
+                                  <p className="text-gray-700">
+                                    {client.bedrooms || "—"} bed
+                                    {client.bedrooms === 1 ? "" : "s"} •{" "}
+                                    {client.bathrooms || "—"} bath
+                                    {client.bathrooms === 1 ? "" : "s"}
+                                  </p>
+                                  <p className="text-gray-500 text-xs mt-1">
+                                    {client.oceanfront ? "Oceanfront • " : ""}
+                                    {client.dock ? "Private Dock" : ""}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs font-semibold text-gray-500 mb-1">
+                                    Documents
+                                  </p>
+                                  {client.documents && client.documents.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {client.documents.map((path: string, i: number) => (
+                                        <button
+                                          key={i}
+                                          onClick={() => handleViewDocument(path)}
+                                          className="flex items-center gap-1.5 text-caribbean-navy hover:text-caribbean-gold text-xs"
+                                        >
+                                          <FileText className="h-3.5 w-3.5" />
+                                          {path.split("-").slice(2).join("-") || `Document ${i + 1}`}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-gray-400 text-xs">No documents uploaded</p>
+                                  )}
+                                </div>
+                              </div>
+                              {client.additional_notes && (
+                                <div className="mt-4">
+                                  <p className="text-xs font-semibold text-gray-500 mb-1">Notes</p>
+                                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                                    {client.additional_notes}
+                                  </p>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    )
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="text-center py-12">
+                        <Star className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          {searchQuery ? "No matching clients" : "No VIP clients yet"}
+                        </h3>
+                        <p className="text-gray-600">
+                          {searchQuery
+                            ? "Try a different search term"
+                            : "Onboarding submissions will appear here"}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {!loading && filteredClients.length > 0 && (
+          <div className="mt-4 text-sm text-gray-600">
+            Showing {filteredClients.length} of {clients.length}{" "}
+            {clients.length === 1 ? "client" : "clients"}
+          </div>
+        )}
       </div>
     </div>
   )
