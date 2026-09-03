@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import Script from "next/script"
 import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -67,6 +67,15 @@ export default function ClientOnboardingPage() {
       })
     }
   }
+
+  // The widget's container div only exists in the DOM on step 5, but the
+  // Turnstile script may finish loading while the visitor is on an earlier
+  // step - so re-attempt rendering whenever they reach step 5.
+  useEffect(() => {
+    if (step === 5) {
+      renderTurnstile()
+    }
+  }, [step])
 
   const [formData, setFormData] = useState({
     first_name: "",
