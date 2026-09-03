@@ -1,7 +1,8 @@
 // @ts-nocheck
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
+import Script from "next/script"
 import { supabase } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +21,12 @@ import {
   Lock,
   X,
 } from "lucide-react"
+
+declare global {
+  interface Window {
+    turnstile: any
+  }
+}
 
 const STEPS = [
   { id: 1, label: "Personal Info", icon: User },
@@ -47,6 +54,19 @@ export default function ClientOnboardingPage() {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState("")
   const [files, setFiles] = useState<File[]>([])
+  const [turnstileToken, setTurnstileToken] = useState("")
+  const turnstileRef = useRef<HTMLDivElement>(null)
+  const widgetIdRef = useRef<string | null>(null)
+
+  const renderTurnstile = () => {
+    if (turnstileRef.current && window.turnstile && !widgetIdRef.current) {
+      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+        callback: (token: string) => setTurnstileToken(token),
+        "expired-callback": () => setTurnstileToken(""),
+      })
+    }
+  }
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -109,6 +129,26 @@ export default function ClientOnboardingPage() {
     setError("")
 
     try {
+      if (!turnstileToken) {
+        throw new Error("Please complete the verification checkbox before submitting.")
+      }
+
+      // Verify the token server-side before doing anything with Storage or the DB
+      const verifyRes = await fetch("/api/verify-turnstile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: turnstileToken }),
+      })
+      const verifyResult = await verifyRes.json()
+
+      if (!verifyResult.success) {
+        if (window.turnstile && widgetIdRef.current) {
+          window.turnstile.reset(widgetIdRef.current)
+        }
+        setTurnstileToken("")
+        throw new Error("Verification failed. Please try the checkbox again.")
+      }
+
       // Upload documents first (if any) to the private client-documents bucket
       const uploadedPaths: string[] = []
       for (const file of files) {
@@ -191,6 +231,11 @@ export default function ClientOnboardingPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="afterInteractive"
+        onLoad={renderTurnstile}
+      />
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
@@ -492,6 +537,8 @@ export default function ClientOnboardingPage() {
                   Caribbean Keys staff.
                 </p>
               </div>
+
+              <div ref={turnstileRef}></div>
             </div>
           )}
 
