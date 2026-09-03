@@ -322,7 +322,7 @@ export default function NewPropertyPage() {
             <ImageUpload
               images={images}
               onImagesChange={setImages}
-              maxImages={15}
+              maxImages={30}
             />
           </div>
 

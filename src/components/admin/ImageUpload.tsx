@@ -17,7 +17,7 @@ export function ImageUpload({
   propertyId, 
   existingImages = [], 
   onImagesChange,
-  maxImages = 15 
+  maxImages = 30 
 }: ImageUploadProps) {
   const [images, setImages] = useState<string[]>(existingImages)
   const [uploading, setUploading] = useState(false)

@@ -390,7 +390,7 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
               propertyId={property.id}
               existingImages={images}
               onImagesChange={setImages}
-              maxImages={15}
+              maxImages={30}
             />
           </div>
 
