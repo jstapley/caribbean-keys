@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
 import { PropertyMap } from "@/components/property/PropertyMap"
+import { FeatureBooklet } from "@/components/property/FeatureBooklet"
 
 // Convert YouTube/Vimeo URLs to embed format
 function getVideoEmbedUrl(url: string): string {
@@ -355,6 +356,9 @@ export function PropertyDetailClient({ property, similarProperties }: PropertyDe
                 <p className="whitespace-pre-line">{property.property_description}</p>
               </div>
             </div>
+
+            {/* Feature Booklet (only renders if this property has spreads) */}
+            <FeatureBooklet propertyId={property.id} />
 
             {/* Features */}
             {features.length > 0 && (
