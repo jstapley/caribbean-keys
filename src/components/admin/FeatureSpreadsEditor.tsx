@@ -110,7 +110,7 @@ export function FeatureSpreadsEditor({ propertyId, galleryImages }: FeatureSprea
     setDraftSupporting((prev) =>
       prev.includes(url)
         ? prev.filter((u) => u !== url)
-        : prev.length < 4
+        : prev.length < 2
         ? [...prev, url]
         : prev
     )
@@ -354,7 +354,7 @@ export function FeatureSpreadsEditor({ propertyId, galleryImages }: FeatureSprea
 
               <div>
                 <Label className="mb-2 block">
-                  Supporting Photos ({draftSupporting.length}/4)
+                  Supporting Photos ({draftSupporting.length}/2)
                 </Label>
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                   {galleryImages.map((url) => (
