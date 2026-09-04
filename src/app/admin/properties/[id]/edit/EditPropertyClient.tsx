@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ImageUpload } from "@/components/admin/ImageUpload"
+import { FeatureSpreadsEditor } from "@/components/admin/FeatureSpreadsEditor"
 import { LocationPicker } from "@/components/admin/LocationPicker"
 import { PARISHES, PROPERTY_TYPES, PROPERTY_FEATURES } from "@/lib/constants"
 import { ChevronLeft, Save, Archive } from "lucide-react"
@@ -392,6 +393,15 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
               onImagesChange={setImages}
               maxImages={30}
             />
+          </div>
+
+          {/* Feature Booklet */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold text-caribbean-navy mb-1">Feature Booklet</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Build an animated, room-by-room feature spread for this listing's detail page. Photos are picked from the gallery above.
+            </p>
+            <FeatureSpreadsEditor propertyId={property.id} galleryImages={images} />
           </div>
 
           {/* Video */}
