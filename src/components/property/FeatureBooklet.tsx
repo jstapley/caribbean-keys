@@ -111,21 +111,15 @@ export function FeatureBooklet({ propertyId }: FeatureBookletProps) {
           {supporting.length > 0 ? (
             <div
               className={`grid gap-3 ${
-                supporting.length === 1
-                  ? "grid-cols-1"
-                  : supporting.length === 3
-                  ? "grid-cols-2 grid-rows-2"
-                  : "grid-cols-2"
+                supporting.length === 3 ? "grid-cols-1" : "grid-cols-2"
               }`}
             >
               {supporting.map((url, i) => (
                 <div
                   key={i}
                   className={`relative overflow-hidden rounded-xl border border-gray-100 ${
-                    supporting.length === 1
+                    supporting.length === 1 || supporting.length === 3
                       ? "aspect-[4/3]"
-                      : supporting.length === 3 && i === 0
-                      ? "row-span-2 aspect-auto h-full"
                       : "aspect-square"
                   }`}
                 >
