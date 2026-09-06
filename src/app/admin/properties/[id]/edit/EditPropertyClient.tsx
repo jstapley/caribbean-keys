@@ -52,6 +52,8 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
     price_orig_asking: property.price_orig_asking?.toString() || "",
     property_description: property.property_description || "",
     listing_status: property.listing_status || "active",
+    price_sold: property.price_sold?.toString() || "",
+    sold_date: property.sold_date || "",
     is_featured: property.is_featured || false,
     is_cip_approved: property.is_cip_approved || false,
     video_url: property.video_url || "",
@@ -94,6 +96,17 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '')
 
+      // Calculate days on market if this property is being marked sold
+      // (measured from the original listing date to the sold date)
+      let daysOnMarket = null
+      if (formData.listing_status === 'sold' && formData.sold_date) {
+        const listedDate = new Date(property.created_at)
+        const soldDateObj = new Date(formData.sold_date)
+        daysOnMarket = Math.round(
+          (soldDateObj.getTime() - listedDate.getTime()) / (1000 * 60 * 60 * 24)
+        )
+      }
+
       // Prepare data for update
       const propertyData = {
         property_name: formData.property_name,
@@ -107,6 +120,9 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
         price_orig_asking: formData.price_orig_asking ? parseFloat(formData.price_orig_asking) : null,
         property_description: formData.property_description || null,
         listing_status: formData.listing_status,
+        price_sold: formData.price_sold ? parseFloat(formData.price_sold) : null,
+        sold_date: formData.sold_date || null,
+        days_on_market: daysOnMarket,
         is_featured: formData.is_featured,
         is_cip_approved: formData.is_cip_approved,
         video_url: formData.video_url || null,
@@ -548,6 +564,40 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.listing_status === 'sold' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-caribbean-seafoam/20 rounded-lg">
+                  <div>
+                    <Label htmlFor="price_sold">Sale Price (USD)</Label>
+                    <Input
+                      id="price_sold"
+                      type="number"
+                      min="0"
+                      value={formData.price_sold}
+                      onChange={(e) => handleInputChange('price_sold', e.target.value)}
+                      placeholder="1150000"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="sold_date">Sold Date</Label>
+                    <Input
+                      id="sold_date"
+                      type="date"
+                      value={formData.sold_date}
+                      onChange={(e) => handleInputChange('sold_date', e.target.value)}
+                    />
+                    {formData.sold_date && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {Math.round(
+                          (new Date(formData.sold_date).getTime() - new Date(property.created_at).getTime()) /
+                            (1000 * 60 * 60 * 24)
+                        )}{" "}
+                        days on market
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center">
                 <Checkbox
