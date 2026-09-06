@@ -15,13 +15,25 @@ export function PropertyMap({ address, propertyName, latitude, longitude }: Prop
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
 
   useEffect(() => {
-    const initMap = async () => {
-      // Check if Google Maps is loaded
-      if (!window.google) {
-        console.error('Google Maps JavaScript API not loaded')
+    let timeoutId: ReturnType<typeof setTimeout>
+    let attempts = 0
+    const MAX_ATTEMPTS = 50 // ~5 seconds at 100ms intervals
+
+    const tryInit = () => {
+      if (window.google && window.google.maps) {
+        initMap()
         return
       }
 
+      attempts++
+      if (attempts < MAX_ATTEMPTS) {
+        timeoutId = setTimeout(tryInit, 100)
+      } else {
+        console.error('Google Maps JavaScript API failed to load after waiting')
+      }
+    }
+
+    const initMap = async () => {
       if (!mapRef.current) return
 
       // If we have lat/lng coordinates, use them
@@ -87,7 +99,9 @@ export function PropertyMap({ address, propertyName, latitude, longitude }: Prop
       }
     }
 
-    initMap()
+    tryInit()
+
+    return () => clearTimeout(timeoutId)
   }, [address, propertyName, latitude, longitude])
 
   return (
