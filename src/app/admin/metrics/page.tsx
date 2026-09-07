@@ -8,18 +8,52 @@ import { AdminNav } from "@/components/admin/AdminNav"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { TrendingUp, Calendar, Percent, MessageSquare, Star, X, ArrowRight, Eye, Phone, Send } from "lucide-react"
+import { TrendingUp, Calendar, Percent, MessageSquare, Star, X, ArrowRight, Eye, Phone, Send, Info } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
 
-const EVENT_LABELS: Record<string, { label: string; icon: any }> = {
-  whatsapp_click: { label: "WhatsApp Clicks", icon: MessageSquare },
-  phone_click: { label: "Phone Clicks", icon: Phone },
-  contact_form_submit: { label: "Contact Form Submits", icon: Send },
-  property_inquiry_submit: { label: "Property Inquiries (GA4)", icon: Send },
-  share_property: { label: "Property Shares", icon: ArrowRight },
-  social_landing_view: { label: "Social Landing Views", icon: Eye },
-  view_full_listing_click: { label: "View Full Listing Clicks", icon: Eye },
-  visualizer_generate: { label: "Visualizer Uses", icon: Star },
+const EVENT_LABELS: Record<string, { label: string; icon: any; tooltip: string }> = {
+  whatsapp_click: {
+    label: "WhatsApp Clicks",
+    icon: MessageSquare,
+    tooltip: "Google Analytics event: fires when a visitor clicks the WhatsApp button.",
+  },
+  phone_click: {
+    label: "Phone Clicks",
+    icon: Phone,
+    tooltip: "Google Analytics event: fires when a visitor taps a phone number link.",
+  },
+  contact_form_submit: {
+    label: "Contact Form Submits",
+    icon: Send,
+    tooltip:
+      "Google Analytics event: fires on a successful /contact page submission only. Separate from the property-page 'Send Inquiry' form below.",
+  },
+  property_inquiry_submit: {
+    label: "Property Inquiries (GA4)",
+    icon: Send,
+    tooltip:
+      "Google Analytics event: fires when a visitor submits the 'Send Inquiry' form on a specific property page. This is a browser-tracked count and may run slightly lower than the actual database total below (e.g. ad blockers can block analytics tracking).",
+  },
+  share_property: {
+    label: "Property Shares",
+    icon: ArrowRight,
+    tooltip: "Google Analytics event: fires when a visitor uses the Share Property button.",
+  },
+  social_landing_view: {
+    label: "Social Landing Views",
+    icon: Eye,
+    tooltip: "Google Analytics event: views of a property's /p/[slug] social landing page.",
+  },
+  view_full_listing_click: {
+    label: "View Full Listing Clicks",
+    icon: Eye,
+    tooltip: "Google Analytics event: fires when a visitor clicks through from a social landing page to the full listing.",
+  },
+  visualizer_generate: {
+    label: "Visualizer Uses",
+    icon: Star,
+    tooltip: "Google Analytics event: fires when a visitor generates an AI room visualization.",
+  },
 }
 
 export default function AdminMetricsPage() {
@@ -306,7 +340,11 @@ export default function AdminMetricsPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-caribbean-navy" />
-                <h2 className="text-xl font-bold text-caribbean-navy">Client Inquiries</h2>
+                <h2 className="text-xl font-bold text-caribbean-navy">All Inquiries</h2>
+                <Info
+                  className="h-4 w-4 text-gray-400 cursor-help"
+                  title="Combines two sources into one total: general submissions from the /contact page, and property-specific 'Send Inquiry' submissions from individual property pages. Both are stored in the same database table. This is the definitive count - the Contact Form Submits and Property Inquiries (GA4) cards below track the same actions via Google Analytics and may run slightly lower."
+                />
               </div>
             </div>
             <p className="text-4xl font-bold text-caribbean-navy mb-1">
@@ -329,6 +367,10 @@ export default function AdminMetricsPage() {
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-caribbean-navy" />
                 <h2 className="text-xl font-bold text-caribbean-navy">VIP Onboarding</h2>
+                <Info
+                  className="h-4 w-4 text-gray-400 cursor-help"
+                  title="A separate, dedicated intake form (with document uploads) that Ross shares directly with serious buyers. Unrelated to the contact form or All Inquiries above."
+                />
               </div>
             </div>
             <p className="text-4xl font-bold text-caribbean-navy mb-1">
@@ -348,7 +390,12 @@ export default function AdminMetricsPage() {
 
         {/* Website Engagement (Google Analytics) */}
         <div className="mt-10">
-          <h2 className="text-xl font-bold text-caribbean-navy mb-4">Website Engagement</h2>
+          <h2 className="text-xl font-bold text-caribbean-navy mb-1">Website Engagement</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Google Analytics tracking - measures visitor behavior on the site. Hover any card
+            below for details on what it tracks. For actual inquiry counts, All Inquiries above
+            is the source of truth.
+          </p>
 
           {ga4Error ? (
             <div className="bg-white rounded-lg shadow-md p-6 border border-red-200">
@@ -379,11 +426,12 @@ export default function AdminMetricsPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.entries(EVENT_LABELS).map(([key, { label, icon: Icon }]) => (
-                  <div key={key} className="bg-white rounded-lg shadow-md p-4">
+                {Object.entries(EVENT_LABELS).map(([key, { label, icon: Icon, tooltip }]) => (
+                  <div key={key} className="bg-white rounded-lg shadow-md p-4" title={tooltip}>
                     <div className="flex items-center gap-2 mb-2">
                       <Icon className="h-4 w-4 text-caribbean-gold" />
                       <p className="text-xs text-gray-600">{label}</p>
+                      <Info className="h-3 w-3 text-gray-300 cursor-help ml-auto" />
                     </div>
                     <p className="text-2xl font-bold text-caribbean-navy">
                       {ga4Loading ? "..." : ga4Data?.events?.[key] ?? 0}
