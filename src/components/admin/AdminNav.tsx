@@ -37,7 +37,7 @@ export function AdminNav() {
     { name: "Properties", href: "/admin/properties", icon: Building2 },
     { name: "Clients", href: "/admin/clients", icon: Users },
     { name: "VIP Clients", href: "/admin/vip-clients", icon: Star },
-    { name: "Sales", href: "/admin/sales-performance", icon: TrendingUp },
+    { name: "Metrics", href: "/admin/metrics", icon: TrendingUp },
   ]
 
   const handleLogout = async () => {
