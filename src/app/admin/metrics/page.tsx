@@ -8,8 +8,19 @@ import { AdminNav } from "@/components/admin/AdminNav"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { TrendingUp, Calendar, Percent, MessageSquare, Star, X, ArrowRight } from "lucide-react"
+import { TrendingUp, Calendar, Percent, MessageSquare, Star, X, ArrowRight, Eye, Phone, Send } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
+
+const EVENT_LABELS: Record<string, { label: string; icon: any }> = {
+  whatsapp_click: { label: "WhatsApp Clicks", icon: MessageSquare },
+  phone_click: { label: "Phone Clicks", icon: Phone },
+  contact_form_submit: { label: "Contact Form Submits", icon: Send },
+  property_inquiry_submit: { label: "Property Inquiries (GA4)", icon: Send },
+  share_property: { label: "Property Shares", icon: ArrowRight },
+  social_landing_view: { label: "Social Landing Views", icon: Eye },
+  view_full_listing_click: { label: "View Full Listing Clicks", icon: Eye },
+  visualizer_generate: { label: "Visualizer Uses", icon: Star },
+}
 
 export default function AdminMetricsPage() {
   const [allProperties, setAllProperties] = useState<any[]>([])
@@ -17,6 +28,9 @@ export default function AdminMetricsPage() {
   const [inquiries, setInquiries] = useState<any[]>([])
   const [onboarding, setOnboarding] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [ga4Data, setGa4Data] = useState<{ pageViews: number; events: Record<string, number> } | null>(null)
+  const [ga4Loading, setGa4Loading] = useState(true)
+  const [ga4Error, setGa4Error] = useState("")
 
   // Shared filters
   const [dateFrom, setDateFrom] = useState("")
@@ -27,12 +41,47 @@ export default function AdminMetricsPage() {
     fetchData()
   }, [])
 
+  useEffect(() => {
+    fetchGA4Data()
+  }, [dateFrom, dateTo, propertyId, allProperties])
+
+  async function fetchGA4Data() {
+    try {
+      setGa4Loading(true)
+      setGa4Error("")
+
+      const params = new URLSearchParams()
+      // GA4 API expects YYYY-MM-DD or its relative keywords; default to last 30 days
+      params.set("startDate", dateFrom || "30daysAgo")
+      params.set("endDate", dateTo || "today")
+
+      if (propertyId !== "all") {
+        const selected = allProperties.find((p) => p.id === propertyId)
+        if (selected?.slug) {
+          params.set("pagePath", selected.slug)
+        }
+      }
+
+      const res = await fetch(`/api/admin/ga4-metrics?${params.toString()}`)
+      const result = await res.json()
+
+      if (!res.ok) throw new Error(result.error || "Failed to load analytics")
+
+      setGa4Data(result)
+    } catch (err: any) {
+      console.error("Error fetching GA4 data:", err)
+      setGa4Error(err.message || "Could not load Google Analytics data")
+    } finally {
+      setGa4Loading(false)
+    }
+  }
+
   async function fetchData() {
     try {
       setLoading(true)
 
       const [propsRes, soldRes, inquiriesRes, onboardingRes] = await Promise.all([
-        supabase.from("properties").select("id, property_name").order("property_name"),
+        supabase.from("properties").select("id, property_name, slug").order("property_name"),
         supabase.from("properties").select("*").eq("listing_status", "sold"),
         supabase.from("property_inquiries").select("*"),
         supabase.from("client_onboarding").select("*"),
@@ -297,12 +346,53 @@ export default function AdminMetricsPage() {
           </div>
         </div>
 
-        {/* GA4 metrics placeholder */}
-        <div className="mt-10 bg-white rounded-lg shadow-md p-6 border border-dashed border-gray-300">
-          <p className="text-sm text-gray-500 text-center">
-            Page views, WhatsApp clicks, phone clicks, and click-through rates will appear here
-            once Google Analytics integration is connected.
-          </p>
+        {/* Website Engagement (Google Analytics) */}
+        <div className="mt-10">
+          <h2 className="text-xl font-bold text-caribbean-navy mb-4">Website Engagement</h2>
+
+          {ga4Error ? (
+            <div className="bg-white rounded-lg shadow-md p-6 border border-red-200">
+              <p className="text-sm text-red-600">{ga4Error}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Double check the GA4 environment variables and that the service account has Viewer
+                access to the property.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Page Views</p>
+                    <p className="text-3xl font-bold text-caribbean-navy">
+                      {ga4Loading ? "..." : ga4Data?.pageViews ?? 0}
+                    </p>
+                  </div>
+                  <div className="bg-caribbean-blue/20 p-3 rounded-full">
+                    <Eye className="h-8 w-8 text-caribbean-navy" />
+                  </div>
+                </div>
+                <p className="mt-4 text-sm text-gray-600">
+                  {propertyId !== "all" ? "For selected property, " : "Site-wide, "}
+                  matching current date range
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {Object.entries(EVENT_LABELS).map(([key, { label, icon: Icon }]) => (
+                  <div key={key} className="bg-white rounded-lg shadow-md p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Icon className="h-4 w-4 text-caribbean-gold" />
+                      <p className="text-xs text-gray-600">{label}</p>
+                    </div>
+                    <p className="text-2xl font-bold text-caribbean-navy">
+                      {ga4Loading ? "..." : ga4Data?.events?.[key] ?? 0}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
