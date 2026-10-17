@@ -242,14 +242,21 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {["St. John's", "St. Peter", "St. Philip", "St. Paul", "St. Mary", "St. George"].map((parish) => (
+            {[
+              { name: "St. John's", slug: "st-john" },
+              { name: "St. Peter", slug: "st-peter" },
+              { name: "St. Philip", slug: "st-philip" },
+              { name: "St. Paul", slug: "st-paul" },
+              { name: "St. Mary", slug: "st-mary" },
+              { name: "St. George", slug: "st-george" },
+            ].map(({ name, slug }) => (
               <Link
-                key={parish}
-                href={`/properties/parish/${parish.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '')}`}
+                key={slug}
+                href={`/locations/${slug}`}
                 className="group bg-caribbean-seafoam hover:bg-caribbean-seafoam/80 rounded-lg p-6 text-center transition-all shadow-sm hover:shadow-md"
               >
                 <MapPin className="h-8 w-8 text-caribbean-navy mx-auto mb-2 group-hover:scale-110 transition-transform" />
-                <div className="font-semibold text-caribbean-navy text-sm">{parish}</div>
+                <div className="font-semibold text-caribbean-navy text-sm">{name}</div>
               </Link>
             ))}
           </div>
