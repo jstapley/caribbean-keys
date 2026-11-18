@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { AdminNav } from "@/components/admin/AdminNav"
 import { Input } from "@/components/ui/input"
 import {
   Star,
@@ -114,8 +113,6 @@ export default function AdminVipClientsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-caribbean-navy mb-2">VIP Clients</h1>

@@ -22,6 +22,15 @@ export const PROPERTY_TYPES = [
 
 export type PropertyType = typeof PROPERTY_TYPES[number]
 
+// Property Tags (portfolio groupings for reporting)
+export const PROPERTY_TAGS = [
+  'The Gardens',
+  'Sugar Ridge',
+  'Private Properties',
+] as const
+
+export type PropertyTag = typeof PROPERTY_TAGS[number]
+
 // Listing Status
 export const LISTING_STATUS = {
   NEW: 'new',

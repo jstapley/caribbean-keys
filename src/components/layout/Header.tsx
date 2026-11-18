@@ -23,6 +23,7 @@ export function Header() {
 
   const projects = [
     { name: "The Gardens", slug: "the-gardens", subtitle: "Jolly Harbour • CIP Approved" },
+    { name: "Sugar Ridge", slug: "sugar-ridge", subtitle: "St. Mary • Luxury Estate" },
   ]
 
   const parishes = [

@@ -4,7 +4,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
-import { AdminNav } from "@/components/admin/AdminNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { ImageUpload } from "@/components/admin/ImageUpload"
 import { LocationPicker } from "@/components/admin/LocationPicker"
-import { PARISHES, PROPERTY_TYPES, PROPERTY_FEATURES } from "@/lib/constants"
+import { PARISHES, PROPERTY_TYPES, PROPERTY_FEATURES, PROPERTY_TAGS } from "@/lib/constants"
 import { ChevronLeft, Save } from "lucide-react"
 import Link from "next/link"
 
@@ -34,6 +33,7 @@ export default function NewPropertyPage() {
     latitude: null as number | null,
     longitude: null as number | null,
     listing_status: 'active',
+    property_tag: '',
     is_featured: false,
     is_cip_approved: false,
     features: [] as string[],
@@ -66,6 +66,7 @@ export default function NewPropertyPage() {
         listing_status: formData.listing_status,
         is_featured: formData.is_featured,
         is_cip_approved: formData.is_cip_approved,
+        property_tag: formData.property_tag || null,
         features: formData.features,
         images: images,
         slug: slug,
@@ -119,8 +120,6 @@ export default function NewPropertyPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-      
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -206,6 +205,25 @@ export default function NewPropertyPage() {
                     <SelectItem value="new">New Listing</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="sold">Sold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="property_tag">Portfolio / Tag</Label>
+                <Select
+                  value={formData.property_tag}
+                  onValueChange={(value) => setFormData({ ...formData, property_tag: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select portfolio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROPERTY_TAGS.map((tag) => (
+                      <SelectItem key={tag} value={tag}>
+                        {tag}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

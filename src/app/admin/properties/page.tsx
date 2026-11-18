@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { AdminNav } from "@/components/admin/AdminNav"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus, Edit, Archive, ArchiveRestore, Eye } from "lucide-react"
@@ -103,8 +102,6 @@ export default function AdminPropertiesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="flex justify-between items-center mb-8">

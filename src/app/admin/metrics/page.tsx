@@ -4,7 +4,6 @@
 import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase/client"
-import { AdminNav } from "@/components/admin/AdminNav"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -56,8 +55,15 @@ const EVENT_LABELS: Record<string, { label: string; icon: any; tooltip: string }
   },
 }
 
+const TAGS = ['The Gardens', 'Sugar Ridge', 'Private Properties']
+
+// Annual targets (edit here as needed)
+const SALES_TARGET = 10         // properties to sell this year
+const REVENUE_TARGET = 5000000  // USD revenue target this year
+
 export default function AdminMetricsPage() {
   const [allProperties, setAllProperties] = useState<any[]>([])
+  const [allPropertiesFull, setAllPropertiesFull] = useState<any[]>([])
   const [soldProperties, setSoldProperties] = useState<any[]>([])
   const [inquiries, setInquiries] = useState<any[]>([])
   const [onboarding, setOnboarding] = useState<any[]>([])
@@ -114,14 +120,16 @@ export default function AdminMetricsPage() {
     try {
       setLoading(true)
 
-      const [propsRes, soldRes, inquiriesRes, onboardingRes] = await Promise.all([
+      const [propsRes, propsFullRes, soldRes, inquiriesRes, onboardingRes] = await Promise.all([
         supabase.from("properties").select("id, property_name, slug").order("property_name"),
+        supabase.from("properties").select("*").eq("is_archived", false).order("property_name"),
         supabase.from("properties").select("*").eq("listing_status", "sold"),
         supabase.from("property_inquiries").select("*"),
         supabase.from("client_onboarding").select("*"),
       ])
 
       if (propsRes.data) setAllProperties(propsRes.data)
+      if (propsFullRes.data) setAllPropertiesFull(propsFullRes.data)
       if (soldRes.data) setSoldProperties(soldRes.data)
       if (inquiriesRes.data) setInquiries(inquiriesRes.data)
       if (onboardingRes.data) setOnboarding(onboardingRes.data)
@@ -182,10 +190,28 @@ export default function AdminMetricsPage() {
     return onboarding.filter((o) => inDateRange(o.created_at))
   }, [onboarding, dateFrom, dateTo])
 
+  // --- Portfolio breakdown by tag ---
+  const portfolioByTag = useMemo(() => {
+    return TAGS.map((tag) => {
+      const tagProps = allPropertiesFull.filter((p) => p.property_tag === tag)
+      const available = tagProps.filter((p) => p.listing_status === 'active' || p.listing_status === 'new')
+      const underContract = tagProps.filter((p) => p.listing_status === 'under_contract')
+      const tagSold = tagProps.filter((p) => p.listing_status === 'sold')
+      const revenueToDate = tagSold.reduce((sum, p) => sum + (p.price_sold || 0), 0)
+      const askingTotal = available.reduce((sum, p) => sum + (p.price_asking || 0), 0)
+      return { tag, total: tagProps.length, available: available.length, underContract: underContract.length, sold: tagSold.length, revenueToDate, askingTotal }
+    })
+  }, [allPropertiesFull])
+
+  // --- Annual target tracking (this calendar year) ---
+  const thisYearStart = `${new Date().getFullYear()}-01-01`
+  const soldThisYear = soldProperties.filter((p) => p.sold_date && p.sold_date >= thisYearStart)
+  const revenueThisYear = soldThisYear.reduce((sum, p) => sum + (p.price_sold || 0), 0)
+  const salesProgress = Math.min(100, Math.round((soldThisYear.length / SALES_TARGET) * 100))
+  const revenueProgress = Math.min(100, Math.round((revenueThisYear / REVENUE_TARGET) * 100))
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-caribbean-navy mb-2">Metrics</h1>
@@ -224,6 +250,106 @@ export default function AdminMetricsPage() {
               Clear Filters
             </Button>
           )}
+        </div>
+
+        {/* Annual Targets */}
+        <div className="mb-10">
+          <h2 className="text-xl font-bold text-caribbean-navy mb-4">Annual Targets ({new Date().getFullYear()})</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Sales target */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-gray-600">Properties Sold</p>
+                <span className="text-xs text-gray-400">Target: {SALES_TARGET}</span>
+              </div>
+              <div className="flex items-end gap-2 mb-3">
+                <p className="text-3xl font-bold text-caribbean-navy">{soldThisYear.length}</p>
+                <p className="text-sm text-gray-500 pb-1">/ {SALES_TARGET} properties</p>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-2.5 mb-2">
+                <div
+                  className="bg-caribbean-gold h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${salesProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500">{salesProgress}% of annual target · {Math.max(0, SALES_TARGET - soldThisYear.length)} remaining</p>
+            </div>
+
+            {/* Revenue target */}
+            <div className="bg-caribbean-navy rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold text-white/70">Revenue to Date</p>
+                <span className="text-xs text-white/40">Target: {formatPrice(REVENUE_TARGET)}</span>
+              </div>
+              <div className="flex items-end gap-2 mb-3">
+                <p className="text-3xl font-bold text-caribbean-gold">{formatPrice(revenueThisYear)}</p>
+              </div>
+              <div className="w-full bg-white/10 rounded-full h-2.5 mb-2">
+                <div
+                  className="bg-caribbean-gold h-2.5 rounded-full transition-all duration-500"
+                  style={{ width: `${revenueProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-white/50">{revenueProgress}% of target · {formatPrice(Math.max(0, REVENUE_TARGET - revenueThisYear))} remaining</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Portfolio Breakdown by Tag */}
+        <div className="mb-10">
+          <h2 className="text-xl font-bold text-caribbean-navy mb-4">Portfolio Breakdown</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {portfolioByTag.map(({ tag, total, available, underContract, sold, revenueToDate, askingTotal }) => (
+              <div key={tag} className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="font-bold text-caribbean-navy mb-4 pb-3 border-b border-gray-100">{tag}</h3>
+                <div className="space-y-2.5 text-sm mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Total</span>
+                    <span className="font-semibold text-gray-800">{total}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-green-600">Available</span>
+                    <span className="font-semibold text-green-700">{available}</span>
+                  </div>
+                  {underContract > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-amber-600">Under Contract</span>
+                      <span className="font-semibold text-amber-700">{underContract}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Sold</span>
+                    <span className="font-semibold text-gray-600">{sold}</span>
+                  </div>
+                </div>
+                {total > 0 && (
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 mb-3">
+                    <div
+                      className="bg-caribbean-gold h-1.5 rounded-full"
+                      style={{ width: `${Math.round((sold / total) * 100)}%` }}
+                    />
+                  </div>
+                )}
+                <div className="pt-3 border-t border-gray-100 space-y-1">
+                  {revenueToDate > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">Revenue Sold</span>
+                      <span className="font-semibold text-caribbean-navy">{formatPrice(revenueToDate)}</span>
+                    </div>
+                  )}
+                  {askingTotal > 0 && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-gray-500">Pipeline Value</span>
+                      <span className="font-semibold text-gray-700">{formatPrice(askingTotal)}</span>
+                    </div>
+                  )}
+                  {revenueToDate === 0 && askingTotal === 0 && (
+                    <p className="text-xs text-gray-400 italic">No pricing data yet</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Sales Performance */}

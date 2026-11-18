@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { AdminNav } from "@/components/admin/AdminNav"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { 
@@ -77,8 +76,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">

@@ -4,7 +4,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase/client"
-import { AdminNav } from "@/components/admin/AdminNav"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { ImageUpload } from "@/components/admin/ImageUpload"
 import { FeatureSpreadsEditor } from "@/components/admin/FeatureSpreadsEditor"
 import { LocationPicker } from "@/components/admin/LocationPicker"
-import { PARISHES, PROPERTY_TYPES, PROPERTY_FEATURES } from "@/lib/constants"
+import { PARISHES, PROPERTY_TYPES, PROPERTY_FEATURES, PROPERTY_TAGS } from "@/lib/constants"
 import { ChevronLeft, Save, Archive } from "lucide-react"
 import Link from "next/link"
 
@@ -56,6 +55,7 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
     sold_date: property.sold_date || "",
     is_featured: property.is_featured || false,
     is_cip_approved: property.is_cip_approved || false,
+    property_tag: property.property_tag || "",
     video_url: property.video_url || "",
     tiktok_url: property.tiktok_url || "",
     latitude: property.latitude?.toString() || "",
@@ -125,6 +125,7 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
         days_on_market: daysOnMarket,
         is_featured: formData.is_featured,
         is_cip_approved: formData.is_cip_approved,
+        property_tag: formData.property_tag || null,
         video_url: formData.video_url || null,
         tiktok_url: formData.tiktok_url || null,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
@@ -200,8 +201,6 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminNav />
-
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -547,22 +546,43 @@ export function EditPropertyClient({ property }: EditPropertyClientProps) {
                   )
                 })()}
               </div>
-              <div>
-                <Label htmlFor="listing_status">Listing Status</Label>
-                <Select
-                  value={formData.listing_status}
-                  onValueChange={(value) => handleInputChange('listing_status', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">New Listing</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="under_contract">Under Contract</SelectItem>
-                    <SelectItem value="sold">Sold</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="listing_status">Listing Status</Label>
+                  <Select
+                    value={formData.listing_status}
+                    onValueChange={(value) => handleInputChange('listing_status', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="new">New Listing</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="under_contract">Under Contract</SelectItem>
+                      <SelectItem value="sold">Sold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="property_tag">Portfolio / Tag</Label>
+                  <Select
+                    value={formData.property_tag}
+                    onValueChange={(value) => handleInputChange('property_tag', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select portfolio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROPERTY_TAGS.map((tag) => (
+                        <SelectItem key={tag} value={tag}>
+                          {tag}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {formData.listing_status === 'sold' && (

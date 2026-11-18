@@ -1,8 +1,7 @@
 // @ts-nocheck
 import type { Metadata } from "next";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { GoogleMapsScript } from "@/components/GoogleMapsScript";
 import { ACTIVE_FONT, montserrat, poppins, workSans, inter, playfair } from "@/lib/fonts/font-config";
 import { LOCAL_BUSINESS_SCHEMA, BASE_URL } from "@/lib/seo-config";
@@ -102,9 +101,7 @@ export default function RootLayout({
       >
         <GoogleMapsScript />
         <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <ConditionalLayout>{children}</ConditionalLayout>
         </div>
         <WhatsAppButton />
       </body>
