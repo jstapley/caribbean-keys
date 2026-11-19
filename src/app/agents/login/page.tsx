@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase/client'
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Mail } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 
-export default function AgentLoginPage() {
+function AgentLoginContent() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -125,5 +125,13 @@ export default function AgentLoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AgentLoginPage() {
+  return (
+    <Suspense>
+      <AgentLoginContent />
+    </Suspense>
   )
 }
