@@ -479,7 +479,8 @@ export default function AdminDashboardPage() {
           <p className="text-sm text-gray-500 mb-4">
             Google Analytics — last 30 days, filtered to {activeTab} property pages
             {TAB_PROJECT_PATHS[activeTab] ? ` and project page` : ""}.
-            Hover any card for details.
+            Hover any card for details.{" "}
+            <span className="text-amber-600 font-medium">Note: GA4 data is processed with a 24–48 hr delay — recent activity will appear tomorrow.</span>
           </p>
 
           {ga4Error ? (

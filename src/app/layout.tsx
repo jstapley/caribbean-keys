@@ -3,12 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { GoogleMapsScript } from "@/components/GoogleMapsScript";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { ACTIVE_FONT, montserrat, poppins, workSans, inter, playfair } from "@/lib/fonts/font-config";
 import { LOCAL_BUSINESS_SCHEMA, BASE_URL } from "@/lib/seo-config";
-import Script from "next/script"
-import { WhatsAppButton } from "@/components/WhatsAppButton";
-
-const GA_MEASUREMENT_ID = "G-YRCEVF9JJX"
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -67,28 +64,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Google Analytics GA4 */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
         {/* Local Business Schema */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(LOCAL_BUSINESS_SCHEMA) }}
         />
       </head>
-      <body 
+      <body
         className={`
           ${ACTIVE_FONT.font.variable}
           ${montserrat.variable}
@@ -99,11 +81,11 @@ export default function RootLayout({
           ${ACTIVE_FONT.className}
         `}
       >
+        <GoogleAnalytics />
         <GoogleMapsScript />
         <div className="flex flex-col min-h-screen">
           <ConditionalLayout>{children}</ConditionalLayout>
         </div>
-        <WhatsAppButton />
       </body>
     </html>
   );
