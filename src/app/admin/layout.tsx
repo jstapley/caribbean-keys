@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  Handshake,
 } from 'lucide-react'
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/admin/properties', icon: Building2, label: 'Properties' },
   { href: '/admin/clients', icon: Users, label: 'Clients' },
   { href: '/admin/vip-clients', icon: Star, label: 'VIP Clients' },
+  { href: '/admin/agents', icon: Handshake, label: 'Agents' },
 ]
 
 function AdminSidebar({
