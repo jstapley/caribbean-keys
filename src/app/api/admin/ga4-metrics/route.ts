@@ -40,49 +40,68 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const startDate = searchParams.get('startDate') || '30daysAgo'
     const endDate = searchParams.get('endDate') || 'today'
-    const pagePathContains = searchParams.get('pagePath') || null
+    // pagePaths: comma-separated list of path prefixes to include (e.g. /properties/the-neem,/projects/sugar-ridge)
+    // If omitted, returns site-wide data.
+    const pagePathsParam = searchParams.get('pagePaths') || null
+    const pagePaths = pagePathsParam ? pagePathsParam.split(',').filter(Boolean) : []
 
     const propertyId = `properties/${process.env.GA4_PROPERTY_ID}`
     const analyticsDataClient = getClient()
 
-    const pagePathFilter = pagePathContains
-      ? {
+    // Build a dimension filter: orGroup across all provided paths (CONTAINS match),
+    // or undefined for site-wide queries.
+    const buildPathFilter = (paths: string[]) => {
+      if (paths.length === 0) return undefined
+      if (paths.length === 1) {
+        return {
           filter: {
             fieldName: 'pagePath',
-            stringFilter: { matchType: 'CONTAINS', value: pagePathContains },
+            stringFilter: { matchType: 'CONTAINS', value: paths[0] },
           },
         }
-      : undefined
+      }
+      return {
+        orGroup: {
+          expressions: paths.map((p) => ({
+            filter: {
+              fieldName: 'pagePath',
+              stringFilter: { matchType: 'CONTAINS', value: p },
+            },
+          })),
+        },
+      }
+    }
 
-    // Total page views in range (optionally scoped to one property's pages)
+    const pathFilter = buildPathFilter(pagePaths)
+
+    // Total page views in range (optionally scoped to the given paths)
     const [pageViewsReport] = await analyticsDataClient.runReport({
       property: propertyId,
       dateRanges: [{ startDate, endDate }],
       metrics: [{ name: 'screenPageViews' }],
-      dimensionFilter: pagePathFilter,
+      dimensionFilter: pathFilter,
     })
 
     const pageViews = Number(pageViewsReport.rows?.[0]?.metricValues?.[0]?.value || 0)
 
-    // Custom event counts in range (optionally scoped to one property's pages)
+    // Custom event counts in range (optionally scoped to the given paths)
+    const eventNameFilter = {
+      filter: {
+        fieldName: 'eventName',
+        inListFilter: { values: TRACKED_EVENTS },
+      },
+    }
+
+    const eventsFilter = pathFilter
+      ? { andGroup: { expressions: [eventNameFilter, pathFilter] } }
+      : eventNameFilter
+
     const [eventsReport] = await analyticsDataClient.runReport({
       property: propertyId,
       dateRanges: [{ startDate, endDate }],
       dimensions: [{ name: 'eventName' }],
       metrics: [{ name: 'eventCount' }],
-      dimensionFilter: {
-        andGroup: {
-          expressions: [
-            {
-              filter: {
-                fieldName: 'eventName',
-                inListFilter: { values: TRACKED_EVENTS },
-              },
-            },
-            ...(pagePathFilter ? [pagePathFilter] : []),
-          ],
-        },
-      },
+      dimensionFilter: eventsFilter,
     })
 
     const events: Record<string, number> = Object.fromEntries(

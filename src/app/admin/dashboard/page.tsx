@@ -30,6 +30,13 @@ type Tab = (typeof TABS)[number]
 const SALES_TARGET = 10
 const REVENUE_TARGET = 5_000_000
 
+// Project page path for each tab (null = no dedicated project page yet)
+const TAB_PROJECT_PATHS: Record<Tab, string | null> = {
+  "Sugar Ridge": "/projects/sugar-ridge",
+  "The Gardens": "/projects/the-gardens",
+  "Private Properties": null,
+}
+
 // GA4 event labels
 const EVENT_LABELS: Record<string, { label: string; icon: any; tooltip: string }> = {
   whatsapp_click: {
@@ -85,15 +92,38 @@ export default function AdminDashboardPage() {
   const [ga4Loading, setGa4Loading] = useState(true)
   const [ga4Error, setGa4Error] = useState("")
 
-  useEffect(() => {
-    fetchData()
-    fetchGA4Data()
-  }, [])
+  // Load Supabase data once on mount
+  useEffect(() => { fetchData() }, [])
 
-  async function fetchGA4Data() {
+  // Re-fetch GA4 whenever the active tab changes or after Supabase data finishes loading
+  useEffect(() => {
+    if (!loading) fetchGA4DataForTab(activeTab)
+  }, [activeTab, loading])
+
+  async function fetchGA4DataForTab(tab: Tab) {
     try {
       setGa4Loading(true)
-      const res = await fetch("/api/admin/ga4-metrics?startDate=30daysAgo&endDate=today")
+      setGa4Error("")
+
+      // Gather all page paths for this tab's properties
+      const tabProps = allProperties.filter((p) => p.property_tag === tab)
+      const paths: string[] = []
+
+      tabProps.forEach((p) => {
+        if (p.slug) {
+          paths.push(`/properties/${p.slug}`)  // main listing page
+          paths.push(`/p/${p.slug}`)            // social landing page
+        }
+      })
+
+      // Add the tab's project page if it exists
+      const projectPath = TAB_PROJECT_PATHS[tab]
+      if (projectPath) paths.push(projectPath)
+
+      const params = new URLSearchParams({ startDate: "30daysAgo", endDate: "today" })
+      if (paths.length > 0) params.set("pagePaths", paths.join(","))
+
+      const res = await fetch(`/api/admin/ga4-metrics?${params.toString()}`)
       const result = await res.json()
       if (!res.ok) throw new Error(result.error || "Failed to load analytics")
       setGa4Data(result)
@@ -441,11 +471,15 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* ── Website Engagement (GA4 — global) ──────────────────────── */}
+        {/* ── Website Engagement (GA4 — per tab) ─────────────────────── */}
         <div className="mt-2">
-          <h2 className="text-lg font-bold text-caribbean-navy mb-1">Website Engagement</h2>
+          <h2 className="text-lg font-bold text-caribbean-navy mb-1">
+            Website Engagement — {activeTab}
+          </h2>
           <p className="text-sm text-gray-500 mb-4">
-            Google Analytics — last 30 days, site-wide. Hover any card for details.
+            Google Analytics — last 30 days, filtered to {activeTab} property pages
+            {TAB_PROJECT_PATHS[activeTab] ? ` and project page` : ""}.
+            Hover any card for details.
           </p>
 
           {ga4Error ? (
