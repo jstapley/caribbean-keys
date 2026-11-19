@@ -2,9 +2,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
-import { Users, Calendar, Home, Search, Mail, Phone, X } from "lucide-react"
+import { Users, Calendar, Home, Search, Mail, Phone, X, Handshake } from "lucide-react"
 
 export default function AdminClientsPage() {
   const [clients, setClients] = useState<any[]>([])
@@ -16,16 +15,9 @@ export default function AdminClientsPage() {
     async function fetchClients() {
       try {
         setLoading(true)
-        const { data, error } = await supabase
-          .from('property_inquiries')
-          .select('*')
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          console.error('Error fetching clients:', error)
-        } else {
-          setClients(data || [])
-        }
+        const res = await fetch('/api/admin/clients')
+        const data = await res.json()
+        setClients(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error('Error:', error)
       } finally {
@@ -154,6 +146,7 @@ export default function AdminClientsPage() {
                   <th className="px-6 py-3 text-left text-sm font-semibold">Name</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Contact</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Property Interested</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Agent</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Date</th>
                 </tr>
               </thead>
@@ -198,6 +191,19 @@ export default function AdminClientsPage() {
                           <td className="px-6 py-4 text-sm text-gray-900">
                             {client.property_name || client.interest || '—'}
                           </td>
+                          <td className="px-6 py-4">
+                            {client.agents ? (
+                              <div className="flex items-center gap-1.5">
+                                <Handshake className="h-3.5 w-3.5 text-caribbean-gold flex-shrink-0" />
+                                <div>
+                                  <div className="text-sm font-medium text-caribbean-navy">{client.agents.name}</div>
+                                  <div className="text-xs text-gray-400">{client.agents.company}</div>
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400">—</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 text-sm text-gray-600">
                             {client.created_at
                               ? new Date(client.created_at).toLocaleDateString()
@@ -206,7 +212,7 @@ export default function AdminClientsPage() {
                         </tr>
                         {isExpanded && client.message && (
                           <tr key={`${client.id}-message`} className="bg-caribbean-seafoam/10">
-                            <td colSpan={4} className="px-6 py-4">
+                            <td colSpan={5} className="px-6 py-4">
                               <p className="text-xs font-semibold text-gray-500 mb-1">Message</p>
                               <p className="text-sm text-gray-700">{client.message}</p>
                             </td>

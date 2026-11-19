@@ -2,15 +2,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
-// Server-side Supabase client. Uses the same public anon key as the rest
-// of the app - no service role key needed, since the existing RLS policy
-// on property_inquiries already permits anonymous INSERT. The Turnstile
-// check above is what adds the actual protection.
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 async function verifyTurnstileToken(token: string, ip: string | null) {
   const formData = new URLSearchParams()
   formData.append('secret', process.env.TURNSTILE_SECRET_KEY!)
@@ -24,6 +15,45 @@ async function verifyTurnstileToken(token: string, ip: string | null) {
 
   const data = await res.json()
   return data.success === true
+}
+
+async function resolveAgentId(admin: any, email: string): Promise<string> {
+  // Check if this person's email is registered as a client by any agent
+  const { data: referral } = await admin
+    .from('agent_referrals')
+    .select('agent_id')
+    .eq('client_email', email.toLowerCase().trim())
+    .limit(1)
+    .single()
+
+  if (referral?.agent_id) return referral.agent_id
+
+  // Fall back to Ross Harris — find or create the record
+  const rossEmail = process.env.NOTIFICATION_EMAIL || 'ross@caribbeankeysrealestate.com'
+
+  const { data: ross } = await admin
+    .from('agents')
+    .select('id')
+    .eq('email', rossEmail)
+    .single()
+
+  if (ross?.id) return ross.id
+
+  // Create Ross's agent record if it doesn't exist yet
+  const { data: newRoss } = await admin
+    .from('agents')
+    .insert({
+      name: 'Ross Harris',
+      email: rossEmail,
+      company: 'Caribbean Keys Real Estate',
+      status: 'approved',
+      referral_code: 'ROSS',
+      approved_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single()
+
+  return newRoss.id
 }
 
 export async function POST(request: Request) {
@@ -46,8 +76,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Basic server-side validation (mirrors the client-side checks, since
-    // a bot could hit this route directly and skip the browser form)
+    // Basic server-side validation
     if (!inquiryData.first_name || !inquiryData.last_name || !inquiryData.email || !inquiryData.phone) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
@@ -57,7 +86,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
     }
 
-    const { error: insertError } = await supabaseAdmin
+    // Need service role for agent lookup (bypasses RLS)
+    const admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const agentId = await resolveAgentId(admin, inquiryData.email)
+
+    const { error: insertError } = await admin
       .from('property_inquiries')
       .insert([
         {
@@ -68,6 +105,7 @@ export async function POST(request: Request) {
           phone: inquiryData.phone,
           interest: inquiryData.interest,
           message: inquiryData.message,
+          referred_by_agent_id: agentId,
         },
       ])
 
