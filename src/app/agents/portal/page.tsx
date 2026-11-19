@@ -4,12 +4,11 @@ import Link from 'next/link'
 import { UserPlus, Calendar, FileText, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const admin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export default async function AgentPortalPage() {
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 

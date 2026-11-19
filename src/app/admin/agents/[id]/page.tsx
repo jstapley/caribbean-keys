@@ -4,14 +4,13 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, FileText, Calendar, ExternalLink } from 'lucide-react'
 
-const admin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export const revalidate = 0
 
 export default async function AgentDetailPage({ params }: { params: { id: string } }) {
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
   const { data: agent } = await admin.from('agents').select('*').eq('id', params.id).single()
   if (!agent) notFound()
 
