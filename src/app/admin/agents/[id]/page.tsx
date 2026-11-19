@@ -6,12 +6,13 @@ import { ArrowLeft, FileText, Calendar, ExternalLink } from 'lucide-react'
 
 export const revalidate = 0
 
-export default async function AgentDetailPage({ params }: { params: { id: string } }) {
+export default async function AgentDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const admin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
-  const { data: agent } = await admin.from('agents').select('*').eq('id', params.id).single()
+  const { data: agent } = await admin.from('agents').select('*').eq('id', id).single()
   if (!agent) notFound()
 
   const { data: referrals } = await admin
