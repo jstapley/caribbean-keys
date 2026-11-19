@@ -10,7 +10,6 @@ import {
   Building2,
   Users,
   Star,
-  TrendingUp,
   LogOut,
   Menu,
   X,
@@ -18,11 +17,10 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
+  { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/properties', icon: Building2, label: 'Properties' },
   { href: '/admin/clients', icon: Users, label: 'Clients' },
   { href: '/admin/vip-clients', icon: Star, label: 'VIP Clients' },
-  { href: '/admin/metrics', icon: TrendingUp, label: 'Metrics' },
 ]
 
 function AdminSidebar({
@@ -38,8 +36,7 @@ function AdminSidebar({
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const isActive = (item: (typeof navItems)[0]) => {
-    if (item.exact) return pathname === item.href
-    return pathname.startsWith(item.href)
+    return pathname === item.href || pathname.startsWith(item.href + '/')
   }
 
   const NavContent = () => (
