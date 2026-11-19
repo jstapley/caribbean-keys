@@ -1,22 +1,18 @@
-// @ts-nocheck
 import type { ReactNode } from "react"
-import { ACTIVE_FONT, montserrat, poppins, workSans, inter, playfair } from "@/lib/fonts/font-config"
+import { Playfair_Display } from "next/font/google"
 import "@/app/globals.css"
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-playfair",
+  display: "swap",
+})
 
 export default function SocialRootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`
-          ${ACTIVE_FONT.font.variable}
-          ${montserrat.variable}
-          ${poppins.variable}
-          ${workSans.variable}
-          ${inter.variable}
-          ${playfair.variable}
-          ${ACTIVE_FONT.className}
-        `}
-      >
+      <body className={`${playfair.variable} font-playfair`}>
         {children}
       </body>
     </html>
